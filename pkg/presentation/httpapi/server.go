@@ -29,7 +29,7 @@ func NewServer(opt *option.Options) *Server {
 
 	go func() {
 		logrus.WithField("listen", s.server.Addr).Info("start server")
-		if err := s.server.ListenAndServe(); err != nil {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logrus.WithError(err).Fatal("start server")
 		}
 	}()

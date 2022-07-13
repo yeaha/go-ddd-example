@@ -19,7 +19,7 @@ alltest:
 	cd ${MKFILE_DIR}
 	docker compose up -d && \
 	TESTDB="postgres://examine:examine@127.0.0.1:5432/examine?sslmode=disable" \
-	go test -tags=dbtest -v ./... | grep -v '^?'
+		go test -tags=dbtest -v ./... | grep -v '^?'
 
 # go install github.com/mitranim/gow@latest
 .PHONY: serve

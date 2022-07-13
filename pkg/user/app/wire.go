@@ -29,7 +29,7 @@ var (
 		wire.Struct(new(Repositories), "*"),
 	)
 
-	handersProvider = wire.NewSet(
+	handlersProvider = wire.NewSet(
 		repositoriesSet,
 		serviceSet,
 
@@ -49,6 +49,6 @@ func initRepositories(db entity.DB) Repositories {
 }
 
 func initHandlers(db entity.DB) Handlers {
-	wire.Build(handersProvider)
+	wire.Build(handlersProvider)
 	return Handlers{}
 }

@@ -73,7 +73,7 @@ var (
 		repositoriesSet, wire.Struct(new(Repositories), "*"),
 	)
 
-	handersProvider = wire.NewSet(
+	handlersProvider = wire.NewSet(
 		repositoriesSet,
 		serviceSet, wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RenewTokenHandler), "*"), wire.Struct(new(handler.RetrieveTokenHandler), "*"), wire.Struct(new(Handlers), "*"),
 	)
