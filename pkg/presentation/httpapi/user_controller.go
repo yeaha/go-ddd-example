@@ -92,7 +92,9 @@ func (c *userController) LoginWithEmail() http.HandlerFunc {
 		_, token, err := c.App.Handlers.LoginWithEmail.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
-				panic(httpkit.NewError(http.StatusUnauthorized))
+				panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{
+					"error": "LOGIN_UNAUTHORIZED",
+				}))
 			}
 			panic(httpkit.WrapError(err))
 		}

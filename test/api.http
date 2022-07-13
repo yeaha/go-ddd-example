@@ -1,0 +1,34 @@
+# 使用vscode插件
+# https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseURL = http://127.0.0.1:8765
+
+### 注册
+POST {{baseURL}}/register
+
+{
+	"email": "test@example.com",
+	"password": "helloworld"
+}
+
+### 登录
+POST {{baseURL}}/login
+
+{
+	"email": "test@example.com",
+	"password": "helloworld"
+}
+
+### 退出
+DELETE {{baseURL}}/login
+
+### 当前登录账号信息
+GET {{baseURL}}/my/identity
+
+### 修改密码
+PUT {{baseURL}}/my/password
+
+{
+	"old_password": "helloworld",
+	"new_password": "helloworld!"
+}
