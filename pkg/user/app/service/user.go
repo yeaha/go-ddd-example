@@ -43,6 +43,8 @@ func (s *UserService) Create(ctx context.Context, email, password string) (*doma
 
 		if err := user.SetPassword(password); err != nil {
 			return nil, fmt.Errorf("set password, %w", err)
+		} else if err := s.Users.Create(ctx, user); err != nil {
+			return nil, err
 		}
 		return user, nil
 	} else if err != nil {
