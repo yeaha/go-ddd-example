@@ -57,7 +57,14 @@ func initLogger(opt *option.Options) {
 	logrus.SetFormatter(&logrus.JSONFormatter{
 		PrettyPrint: opt.LogPretty,
 	})
-	logrus.SetLevel(logrus.DebugLevel)
+
+	if v := opt.LogLevel; v != "" {
+		if lvl, err := logrus.ParseLevel(v); err != nil {
+			logrus.WithError(err).Fatal("parse logLevel")
+		} else {
+			logrus.SetLevel(lvl)
+		}
+	}
 }
 
 func main() {
