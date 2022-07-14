@@ -14,3 +14,9 @@ type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) error
 	Save(ctx context.Context, user *domain.User) error
 }
+
+// OauthRepository 三方账号关联
+type OauthRepository interface {
+	Bind(ctx context.Context, userID uuid.UUID, vendor, vendorUID string) error
+	Find(ctx context.Context, vendor, vendorUID string) (uuid.UUID, error)
+}

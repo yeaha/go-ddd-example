@@ -32,3 +32,9 @@ PUT {{baseURL}}/my/password
 	"old_password": "helloworld",
 	"new_password": "helloworld!"
 }
+
+### facebook登录
+GET {{baseURL}}/login/oauth/facebook?redirect_uri=https://www.example.com/login/oauth/facebook
+
+### google登录
+GET {{baseURL}}/login/oauth/google?redirect_uri=https://www.example.com/login/oauth/google
