@@ -1,10 +1,10 @@
 package app
 
 import (
-	"github.com/joyparty/entity/cache"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
 )
 
 // Application 账号模块业务逻辑
@@ -36,6 +36,6 @@ func NewApplication(opt *option.Options) *Application {
 
 	return &Application{
 		Repositories: initRepositories(db),
-		Handlers:     initHandlers(db, db, cache.NewMemoryCache()),
+		Handlers:     initHandlers(db, db, infra.NewMemoryCache()),
 	}
 }

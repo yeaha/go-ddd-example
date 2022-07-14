@@ -241,7 +241,11 @@ func (c *userController) RegisterWithOauth() http.HandlerFunc {
 
 		user, token, err := c.App.Handlers.RegisterWithOauth.Handle(r.Context(), req)
 		if err != nil {
-			if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
+			if errors.Is(err, domain.ErrInvalidVendorToken) {
+				panic(httpkit.NewError(http.StatusNotAcceptable).WithJSON(httpkit.M{
+					"error": "INVALID_VENDOR_TOKEN",
+				}))
+			} else if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 				panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{
 					"error": "LOGIN_UNAUTHORIZED",
 				}))

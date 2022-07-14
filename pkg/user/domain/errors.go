@@ -13,4 +13,8 @@ var (
 	ErrInvalidSessionToken = errors.New("invalid session token")
 	// ErrSessionTokenExpired 会话凭证已过期
 	ErrSessionTokenExpired = errors.New("session token expired")
+	// ErrMissingCache 缓存不存在
+	ErrMissingCache = errors.New("missing cache")
+	// ErrInvalidVendorToken 无效的三方验证信息缓存凭证
+	ErrInvalidVendorToken = errors.New("invalid vendor token")
 )

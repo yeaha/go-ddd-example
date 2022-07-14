@@ -14,6 +14,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/joyparty/entity v0.4.0
 	github.com/joyparty/httpkit v0.0.0-20210922025119-15e5a35ab468
+	github.com/pmylund/go-cache v2.1.0+incompatible
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
@@ -35,7 +36,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/pmylund/go-cache v2.1.0+incompatible // indirect
 	github.com/thedevsaddam/renderer v1.2.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
