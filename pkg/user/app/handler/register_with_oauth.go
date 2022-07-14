@@ -18,14 +18,15 @@ type RegisterWithOauth struct {
 
 // RegisterWithOauthHandler 三方账号注册
 type RegisterWithOauthHandler struct {
-	Session *service.SessionTokenService
-	Oauth   *service.OauthService
-	Users   *service.UserService
+	Session    *service.SessionTokenService
+	Oauth      *service.OauthService
+	OauthToken *service.OauthTokenService
+	Users      *service.UserService
 }
 
 // Handle 三方登录，绑定或注册新账号
 func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWithOauth) (user *domain.User, sessionToken string, err error) {
-	vendorUser, err := h.Oauth.RetrieveVendorUser(ctx, args.VendorToken)
+	vendorUser, err := h.OauthToken.Retrieve(ctx, args.VendorToken)
 	if err != nil {
 		err = fmt.Errorf("retrieve vendor user from cache, %w", err)
 		return

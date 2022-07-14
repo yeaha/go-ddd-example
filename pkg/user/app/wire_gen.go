@@ -51,12 +51,15 @@ func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
 	oauthService := &service.OauthService{
 		Users: userDBRepository,
 		Oauth: oauthDBRepository,
+	}
+	oauthTokenService := &service.OauthTokenService{
 		Cache: cache,
 	}
 	registerWithOauthHandler := &handler.RegisterWithOauthHandler{
-		Session: sessionTokenService,
-		Oauth:   oauthService,
-		Users:   userService,
+		Session:    sessionTokenService,
+		Oauth:      oauthService,
+		OauthToken: oauthTokenService,
+		Users:      userService,
 	}
 	renewTokenHandler := &handler.RenewTokenHandler{
 		Session: sessionTokenService,
@@ -65,8 +68,9 @@ func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
 		Session: sessionTokenService,
 	}
 	verifyOauthHandler := &handler.VerifyOauthHandler{
-		Oauth:   oauthService,
-		Session: sessionTokenService,
+		Oauth:      oauthService,
+		OauthToken: oauthTokenService,
+		Session:    sessionTokenService,
 	}
 	handlers := Handlers{
 		ChangePassword:    changePasswordHandler,
@@ -87,7 +91,7 @@ var (
 	repositoriesSet = wire.NewSet(wire.NewSet(infra.NewUserDBRepository, wire.Bind(new(adapter.UserRepository), new(*infra.UserDBRepository))), wire.NewSet(infra.NewOauthDBRepository, wire.Bind(new(adapter.OauthRepository), new(*infra.OauthDBRepository))),
 	)
 
-	serviceSet = wire.NewSet(wire.Struct(new(service.OauthService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
+	serviceSet = wire.NewSet(wire.Struct(new(service.OauthService), "*"), wire.Struct(new(service.OauthTokenService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
 
 	repositoriesProvider = wire.NewSet(
 		repositoriesSet, wire.Struct(new(Repositories), "*"),

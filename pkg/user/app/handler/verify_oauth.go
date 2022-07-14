@@ -33,8 +33,9 @@ type VerifyOauthResult struct {
 
 // VerifyOauthHandler 三方登录验证
 type VerifyOauthHandler struct {
-	Oauth   *service.OauthService
-	Session *service.SessionTokenService
+	Oauth      *service.OauthService
+	OauthToken *service.OauthTokenService
+	Session    *service.SessionTokenService
 }
 
 // Handle 验证三方登录
@@ -55,7 +56,7 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 	if errors.Is(err, domain.ErrUserNotFound) {
 		var vendorToken string
 
-		vendorToken, err = h.Oauth.CacheVendorUser(ctx, vendorUser)
+		vendorToken, err = h.OauthToken.Save(ctx, vendorUser)
 		if err != nil {
 			err = fmt.Errorf("cache vendor user, %w", err)
 			return
