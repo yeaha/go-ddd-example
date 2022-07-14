@@ -5,16 +5,15 @@ package infra
 
 import (
 	"context"
-	"errors"
+	"database/sql"
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/database"
 
@@ -23,8 +22,7 @@ import (
 )
 
 var (
-	errAutoRollback = errors.New("auto rollback")
-	testDB          *sqlx.DB
+	testDB *sqlx.DB
 )
 
 func init() {
@@ -45,68 +43,49 @@ func init() {
 	entity.DefaultCacher = cache.NewMemoryCache()
 }
 
-type (
-	testCase struct {
-		Name string
-		Fn   func() error
-	}
-
-	testCases []testCase
-)
-
-func (tc testCases) Execute() error {
-	for _, v := range tc {
-		if err := v.Fn(); err != nil {
-			return fmt.Errorf("%s, %w", v.Name, err)
-		}
-	}
-	return nil
+func TestUserDBRepository(t *testing.T) {
+	suite.Run(t, &userRepositoryTestSuite{})
 }
 
-func TestUserDBRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+type userRepositoryTestSuite struct {
+	suite.Suite
+	repos *UserDBRepository
+	tx    *sqlx.Tx
 
-		var (
-			user  *domain.User
-			repos = NewUserDBRepository(tx)
-		)
-
-		if err := (testCases{
-			{
-				Name: "Create()",
-				Fn: func() error {
-					user = &domain.User{}
-					user.SetEmail("yangyi@juwang.cn")
-					require.NoError(t, user.SetPassword("abcdef"))
-
-					return repos.Create(ctx, user)
-				},
-			},
-			{
-				Name: "FindByEmail",
-				Fn: func() error {
-					_, err := repos.FindByEmail(ctx, "yangyi@qq.com")
-					require.ErrorIs(t, err, domain.ErrUserNotFound)
-
-					_, err = repos.FindByEmail(ctx, "yangyi@juwang.cn")
-					return err
-				},
-			},
-			{
-				Name: "Save()",
-				Fn: func() error {
-					require.NoError(t, user.RefreshSessionSalt())
-					return repos.Save(ctx, user)
-				},
-			},
-		}).Execute(); err != nil {
-			return err
-		}
-
-		return errAutoRollback
-	}); !errors.Is(err, errAutoRollback) {
-		t.Fatalf("users repository, %v", err)
+	ctx struct {
+		Email string
 	}
+}
+
+func (s *userRepositoryTestSuite) SetupSuite() {
+	tx, err := testDB.BeginTxx(context.Background(), &sql.TxOptions{})
+	s.Require().NoError(err)
+
+	s.tx = tx
+	s.repos = NewUserDBRepository(tx)
+
+	s.ctx.Email = "test@example.com"
+}
+
+func (s *userRepositoryTestSuite) TearDownSuite() {
+	s.Require().NoError(s.tx.Rollback())
+}
+
+func (s *userRepositoryTestSuite) Test1_Create() {
+	user := &domain.User{}
+	user.SetEmail(s.ctx.Email)
+
+	require := s.Require()
+	require.NoError(user.SetPassword("abcdef"))
+	require.NoError(s.repos.Create(context.Background(), user))
+}
+
+func (s *userRepositoryTestSuite) Test2_FindByEmail() {
+	require := s.Require()
+
+	_, err := s.repos.FindByEmail(context.Background(), "test@example.net")
+	require.ErrorIs(err, domain.ErrUserNotFound)
+
+	_, err = s.repos.FindByEmail(context.Background(), s.ctx.Email)
+	require.NoError(err)
 }
