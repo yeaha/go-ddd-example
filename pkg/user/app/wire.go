@@ -18,9 +18,14 @@ var (
 			infra.NewUserDBRepository,
 			wire.Bind(new(adapter.UserRepository), new(*infra.UserDBRepository)),
 		),
+		wire.NewSet(
+			infra.NewOauthDBRepository,
+			wire.Bind(new(adapter.OauthRepository), new(*infra.OauthDBRepository)),
+		),
 	)
 
 	serviceSet = wire.NewSet(
+		wire.Struct(new(service.OauthService), "*"),
 		wire.Struct(new(service.SessionTokenService), "*"),
 	)
 
@@ -33,12 +38,14 @@ var (
 		repositoriesSet,
 		serviceSet,
 
-		wire.Struct(new(handler.LoginWithEmailHandler), "*"),
 		wire.Struct(new(handler.ChangePasswordHandler), "*"),
+		wire.Struct(new(handler.LoginWithEmailHandler), "*"),
 		wire.Struct(new(handler.LogoutHandler), "*"),
 		wire.Struct(new(handler.RegisterHandler), "*"),
+		wire.Struct(new(handler.RegisterWithOauthHandler), "*"),
 		wire.Struct(new(handler.RenewTokenHandler), "*"),
 		wire.Struct(new(handler.RetrieveTokenHandler), "*"),
+		wire.Struct(new(handler.VerifyOauthHandler), "*"),
 		wire.Struct(new(Handlers), "*"),
 	)
 )
@@ -48,7 +55,7 @@ func initRepositories(db entity.DB) Repositories {
 	return Repositories{}
 }
 
-func initHandlers(db entity.DB) Handlers {
+func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
 	wire.Build(handlersProvider)
 	return Handlers{}
 }

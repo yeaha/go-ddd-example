@@ -18,6 +18,9 @@ func newRouter(opt *option.Options) chi.Router {
 	router.Post(`/login`, uc.LoginWithEmail())
 	router.Post(`/register`, uc.Register())
 	router.Delete(`/login`, uc.Logout())
+	router.Get(`/login/oauth/{site}`, uc.LoginWithOauth())
+	router.Post(`/login/oauth/{site}`, uc.VerifyOauth())
+	router.Post(`/register/oauth`, uc.RegisterWithOauth())
 
 	router.Group(func(router chi.Router) {
 		router.Use(uc.DenyAnonymous)

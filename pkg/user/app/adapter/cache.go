@@ -7,6 +7,7 @@ import (
 
 // Cacher 缓存接口
 type Cacher interface {
-	Set(ctx context.Context, key string, value []byte, ttl time.Duration) error
+	Put(ctx context.Context, key string, value []byte, ttl time.Duration) error
 	Get(ctx context.Context, key string) (value []byte, err error)
+	Delete(ctx context.Context, key string) error
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/joyparty/entity/cache"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
@@ -14,12 +15,14 @@ type Application struct {
 
 // Handlers 业务命令
 type Handlers struct {
-	ChangePassword *handler.ChangePasswordHandler
-	RenewToken     *handler.RenewTokenHandler
-	LoginWithEmail *handler.LoginWithEmailHandler
-	Logout         *handler.LogoutHandler
-	Register       *handler.RegisterHandler
-	RetrieveToken  *handler.RetrieveTokenHandler
+	ChangePassword    *handler.ChangePasswordHandler
+	LoginWithEmail    *handler.LoginWithEmailHandler
+	Logout            *handler.LogoutHandler
+	Register          *handler.RegisterHandler
+	RegisterWithOauth *handler.RegisterWithOauthHandler
+	RenewToken        *handler.RenewTokenHandler
+	RetrieveToken     *handler.RetrieveTokenHandler
+	VerifyOauth       *handler.VerifyOauthHandler
 }
 
 // Repositories 数据存储
@@ -33,6 +36,6 @@ func NewApplication(opt *option.Options) *Application {
 
 	return &Application{
 		Repositories: initRepositories(db),
-		Handlers:     initHandlers(db),
+		Handlers:     initHandlers(db, cache.NewMemoryCache()),
 	}
 }

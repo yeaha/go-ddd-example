@@ -6,6 +6,7 @@ import (
 	"net/url"
 )
 
+// https://developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow
 type facebook struct {
 	opt *Options
 }
@@ -37,6 +38,10 @@ func (fb *facebook) Authorize(code, redirectURI string) (*User, error) {
 		AccessToken: accessToken,
 		ID:          userID,
 	}, nil
+}
+
+func (fb *facebook) Vendor() string {
+	return "facebook"
 }
 
 func (fb *facebook) requestAccessToken(code, redirectURI string) (string, error) {

@@ -4,3 +4,7 @@ port = 8765
 [database]
 driver = "pgx"
 dsn = "postgres://examine:examine@127.0.0.1:5432/examine?sslmode=disable"
+
+[oauth.facebook]
+client_id = "1234324"
+client_secret = "fjdalfjdslfjsalfjslf"

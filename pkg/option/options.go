@@ -9,6 +9,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/jmoiron/sqlx"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/database"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
 var (
@@ -27,10 +28,12 @@ type Options struct {
 	HTTP struct {
 		Port int `toml:"port"`
 	} `toml:"http"`
-	Database database.Option `toml:"database"`
+	Database database.Option          `toml:"database"`
+	Oauth    map[string]oauth.Options `toml:"oauth"`
 
 	clients struct {
 		database *sqlx.DB
+		oauth    map[string]oauth.Client
 	}
 }
 
@@ -57,6 +60,15 @@ func (opt *Options) Prepare() error {
 	}
 	opt.clients.database = db.Unsafe()
 
+	opt.clients.oauth = make(map[string]oauth.Client)
+	for name, options := range opt.Oauth {
+		client, err := oauth.NewClient(name, &options)
+		if err != nil {
+			return fmt.Errorf("create oauth client, %q, %w", name, err)
+		}
+		opt.clients.oauth[name] = client
+	}
+
 	return nil
 }
 
@@ -67,4 +79,10 @@ func (opt *Options) GetDB() *sqlx.DB {
 	}
 
 	panic(errOptionNotPrepare)
+}
+
+// GetOauthClient 获取三方登录客户端
+func (opt *Options) GetOauthClient(name string) (oauth.Client, bool) {
+	client, ok := opt.clients.oauth[name]
+	return client, ok
 }
