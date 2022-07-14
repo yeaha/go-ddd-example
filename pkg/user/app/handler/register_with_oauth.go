@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -31,10 +30,6 @@ type RegisterWithOauthHandler struct {
 func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWithOauth) (user *domain.User, sessionToken string, err error) {
 	vendorUser, err := h.OauthToken.Retrieve(ctx, args.VendorToken)
 	if err != nil {
-		if errors.Is(err, domain.ErrMissingCache) {
-			err = domain.ErrInvalidVendorToken
-			return
-		}
 		err = fmt.Errorf("retrieve vendor user from cache, %w", err)
 		return
 	}

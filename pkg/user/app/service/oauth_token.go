@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
@@ -33,6 +35,9 @@ func (s *OauthTokenService) Save(ctx context.Context, vendorUser *oauth.User) (t
 func (s *OauthTokenService) Retrieve(ctx context.Context, token string) (*oauth.User, error) {
 	value, err := s.Cache.Get(ctx, token)
 	if err != nil {
+		if errors.Is(err, domain.ErrMissingCache) {
+			return nil, domain.ErrInvalidVendorToken
+		}
 		return nil, err
 	}
 
