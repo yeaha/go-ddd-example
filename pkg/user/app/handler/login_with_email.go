@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
@@ -17,18 +16,16 @@ type LoginWithEmail struct {
 
 // LoginWithEmailHandler 使用Email登录
 type LoginWithEmailHandler struct {
-	Users   adapter.UserRepository
 	Session *service.SessionTokenService
+	Users   *service.UserService
 }
 
 // Handle 执行
 func (h *LoginWithEmailHandler) Handle(ctx context.Context, args LoginWithEmail) (user *domain.User, token string, err error) {
-	user, err = h.Users.FindByEmail(ctx, domain.NormalizeEmail(args.Email))
+	user, err = h.Users.Authorize(ctx, args.Email, args.Password)
 	if err != nil {
-		err = fmt.Errorf("find user, %w", err)
+		err = fmt.Errorf("user authorize, %w", err)
 		return
-	} else if !user.ComparePassword(args.Password) {
-		return nil, "", domain.ErrWrongPassword
 	}
 
 	token, err = h.Session.Generate(ctx, user)

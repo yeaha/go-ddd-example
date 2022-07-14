@@ -33,29 +33,36 @@ func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
 	sessionTokenService := &service.SessionTokenService{
 		Users: userDBRepository,
 	}
+	userService := &service.UserService{
+		Users: userDBRepository,
+	}
 	loginWithEmailHandler := &handler.LoginWithEmailHandler{
-		Users:   userDBRepository,
 		Session: sessionTokenService,
+		Users:   userService,
 	}
 	logoutHandler := &handler.LogoutHandler{
 		Session: sessionTokenService,
 	}
 	registerHandler := &handler.RegisterHandler{
-		User:    userDBRepository,
 		Session: sessionTokenService,
-	}
-	registerWithOauthHandler := &handler.RegisterWithOauthHandler{}
-	renewTokenHandler := &handler.RenewTokenHandler{
-		Session: sessionTokenService,
-	}
-	retrieveTokenHandler := &handler.RetrieveTokenHandler{
-		Session: sessionTokenService,
+		Users:   userService,
 	}
 	oauthDBRepository := infra.NewOauthDBRepository(db)
 	oauthService := &service.OauthService{
 		Users: userDBRepository,
 		Oauth: oauthDBRepository,
 		Cache: cache,
+	}
+	registerWithOauthHandler := &handler.RegisterWithOauthHandler{
+		Session: sessionTokenService,
+		Oauth:   oauthService,
+		Users:   userService,
+	}
+	renewTokenHandler := &handler.RenewTokenHandler{
+		Session: sessionTokenService,
+	}
+	retrieveTokenHandler := &handler.RetrieveTokenHandler{
+		Session: sessionTokenService,
 	}
 	verifyOauthHandler := &handler.VerifyOauthHandler{
 		Oauth:   oauthService,
@@ -80,7 +87,7 @@ var (
 	repositoriesSet = wire.NewSet(wire.NewSet(infra.NewUserDBRepository, wire.Bind(new(adapter.UserRepository), new(*infra.UserDBRepository))), wire.NewSet(infra.NewOauthDBRepository, wire.Bind(new(adapter.OauthRepository), new(*infra.OauthDBRepository))),
 	)
 
-	serviceSet = wire.NewSet(wire.Struct(new(service.OauthService), "*"), wire.Struct(new(service.SessionTokenService), "*"))
+	serviceSet = wire.NewSet(wire.Struct(new(service.OauthService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
 
 	repositoriesProvider = wire.NewSet(
 		repositoriesSet, wire.Struct(new(Repositories), "*"),
