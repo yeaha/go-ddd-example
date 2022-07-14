@@ -36,6 +36,6 @@ func NewApplication(opt *option.Options) *Application {
 
 	return &Application{
 		Repositories: initRepositories(db),
-		Handlers:     initHandlers(db, cache.NewMemoryCache()),
+		Handlers:     initHandlers(db, db, cache.NewMemoryCache()),
 	}
 }

@@ -8,6 +8,7 @@ package app
 
 import (
 	"github.com/google/wire"
+	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
@@ -17,16 +18,16 @@ import (
 
 // Injectors from wire.go:
 
-func initRepositories(db entity.DB) Repositories {
-	userDBRepository := infra.NewUserDBRepository(db)
+func initRepositories(dbi entity.DB) Repositories {
+	userDBRepository := infra.NewUserDBRepository(dbi)
 	repositories := Repositories{
 		Users: userDBRepository,
 	}
 	return repositories
 }
 
-func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
-	userDBRepository := infra.NewUserDBRepository(db)
+func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
+	userDBRepository := infra.NewUserDBRepository(dbi)
 	changePasswordHandler := &handler.ChangePasswordHandler{
 		User: userDBRepository,
 	}
@@ -47,25 +48,24 @@ func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
 		Session: sessionTokenService,
 		Users:   userService,
 	}
-	oauthDBRepository := infra.NewOauthDBRepository(db)
-	oauthService := &service.OauthService{
-		Users: userDBRepository,
-		Oauth: oauthDBRepository,
-	}
 	oauthTokenService := &service.OauthTokenService{
 		Cache: cache,
 	}
 	registerWithOauthHandler := &handler.RegisterWithOauthHandler{
+		DB:         db,
 		Session:    sessionTokenService,
-		Oauth:      oauthService,
 		OauthToken: oauthTokenService,
-		Users:      userService,
 	}
 	renewTokenHandler := &handler.RenewTokenHandler{
 		Session: sessionTokenService,
 	}
 	retrieveTokenHandler := &handler.RetrieveTokenHandler{
 		Session: sessionTokenService,
+	}
+	oauthDBRepository := infra.NewOauthDBRepository(dbi)
+	oauthService := &service.OauthService{
+		Users: userDBRepository,
+		Oauth: oauthDBRepository,
 	}
 	verifyOauthHandler := &handler.VerifyOauthHandler{
 		Oauth:      oauthService,

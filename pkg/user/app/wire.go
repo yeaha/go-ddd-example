@@ -5,6 +5,7 @@ package app
 
 import (
 	"github.com/google/wire"
+	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
@@ -52,12 +53,12 @@ var (
 	)
 )
 
-func initRepositories(db entity.DB) Repositories {
+func initRepositories(dbi entity.DB) Repositories {
 	wire.Build(repositoriesProvider)
 	return Repositories{}
 }
 
-func initHandlers(db entity.DB, cache adapter.Cacher) Handlers {
+func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
 	wire.Build(handlersProvider)
 	return Handlers{}
 }

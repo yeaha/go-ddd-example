@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/joyparty/entity"
 	uuid "github.com/satori/go.uuid"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
 // RegisterWithOauth 三方账号注册，参数
@@ -18,10 +21,9 @@ type RegisterWithOauth struct {
 
 // RegisterWithOauthHandler 三方账号注册
 type RegisterWithOauthHandler struct {
+	DB         *sqlx.DB
 	Session    *service.SessionTokenService
-	Oauth      *service.OauthService
 	OauthToken *service.OauthTokenService
-	Users      *service.UserService
 }
 
 // Handle 三方登录，绑定或注册新账号
@@ -32,25 +34,43 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 		return
 	}
 
-	if args.VerifyPassword != "" {
-		user, err = h.Users.Authorize(ctx, args.Email, args.VerifyPassword)
-	} else {
-		user, err = h.Users.Create(ctx, args.Email, uuid.NewV4().String())
-	}
-
-	if err != nil {
-		return
-	}
-
-	if err = h.Oauth.Bind(ctx, user, vendorUser); err != nil {
-		err = fmt.Errorf("bound vendor user, %w", err)
+	if err = entity.Transaction(h.DB, func(tx *sqlx.Tx) error {
+		user, err = h.handle(
+			ctx, args, vendorUser,
+			service.NewUserService(tx),
+			service.NewOauthService(tx),
+		)
+		return err
+	}); err != nil {
 		return
 	}
 
 	sessionToken, err = h.Session.Generate(ctx, user)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
+	}
+	return
+}
+
+func (h *RegisterWithOauthHandler) handle(
+	ctx context.Context,
+	args RegisterWithOauth,
+	vendorUser *oauth.User,
+	userService *service.UserService,
+	oauthService *service.OauthService,
+) (user *domain.User, err error) {
+	if args.VerifyPassword != "" {
+		user, err = userService.Authorize(ctx, args.Email, args.VerifyPassword)
+	} else {
+		user, err = userService.Create(ctx, args.Email, uuid.NewV4().String())
+	}
+
+	if err != nil {
 		return
+	}
+
+	if err = oauthService.Bind(ctx, user, vendorUser); err != nil {
+		err = fmt.Errorf("bound vendor user, %w", err)
 	}
 	return
 }

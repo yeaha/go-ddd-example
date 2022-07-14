@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
@@ -13,6 +15,14 @@ import (
 type OauthService struct {
 	Users adapter.UserRepository
 	Oauth adapter.OauthRepository
+}
+
+// NewOauthService 构造函数
+func NewOauthService(tx *sqlx.Tx) *OauthService {
+	return &OauthService{
+		Users: infra.NewUserDBRepository(tx),
+		Oauth: infra.NewOauthDBRepository(tx),
+	}
 }
 
 // Find 查询关联账号

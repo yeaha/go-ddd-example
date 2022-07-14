@@ -5,13 +5,22 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
 )
 
 // UserService 账号逻辑
 type UserService struct {
 	Users adapter.UserRepository
+}
+
+// NewUserService 构造函数
+func NewUserService(tx *sqlx.Tx) *UserService {
+	return &UserService{
+		Users: infra.NewUserDBRepository(tx),
+	}
 }
 
 // Authorize 验证
