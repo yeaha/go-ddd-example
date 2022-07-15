@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 )
@@ -102,7 +103,7 @@ func (fb *facebook) requestUserID(accessToken string) (string, error) {
 	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
 		return "", fmt.Errorf("decode response, %w", err)
 	} else if !body.Data.IsValid {
-		return "", fmt.Errorf("invalid token, %w", err)
+		return "", errors.New("invalid access token")
 	}
 	return body.Data.UserID, nil
 }
