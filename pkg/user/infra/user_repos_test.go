@@ -64,7 +64,7 @@ func (s *userRepositoryTestSuite) SetupSuite() {
 	s.tx = tx
 	s.repos = NewUserDBRepository(tx)
 
-	s.ctx.Email = "test@example.com"
+	s.ctx.Email = "test@test.com"
 }
 
 func (s *userRepositoryTestSuite) TearDownSuite() {
@@ -72,10 +72,10 @@ func (s *userRepositoryTestSuite) TearDownSuite() {
 }
 
 func (s *userRepositoryTestSuite) Test1_Create() {
-	user := &domain.User{}
-	user.SetEmail(s.ctx.Email)
-
 	require := s.Require()
+	user := &domain.User{}
+
+	require.NoError(user.SetEmail(s.ctx.Email))
 	require.NoError(user.SetPassword("abcdef"))
 	require.NoError(s.repos.Create(context.Background(), user))
 }
@@ -83,7 +83,7 @@ func (s *userRepositoryTestSuite) Test1_Create() {
 func (s *userRepositoryTestSuite) Test2_FindByEmail() {
 	require := s.Require()
 
-	_, err := s.repos.FindByEmail(context.Background(), "test@example.net")
+	_, err := s.repos.FindByEmail(context.Background(), "test@test.net")
 	require.ErrorIs(err, domain.ErrUserNotFound)
 
 	_, err = s.repos.FindByEmail(context.Background(), s.ctx.Email)

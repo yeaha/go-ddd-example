@@ -3,9 +3,11 @@ package domain
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/asaskevich/govalidator"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -20,6 +22,11 @@ type User struct {
 
 // SetPassword 设置密码
 func (u *User) SetPassword(password string) error {
+	password = strings.TrimSpace(password)
+	if password == "" {
+		return errors.New("empty password")
+	}
+
 	if err := u.refreshPasswordSalt(); err != nil {
 		return fmt.Errorf("refresh password salt, %w", err)
 	}
@@ -29,8 +36,14 @@ func (u *User) SetPassword(password string) error {
 }
 
 // SetEmail 设置email
-func (u *User) SetEmail(email string) {
-	u.Email = NormalizeEmail(email)
+func (u *User) SetEmail(email string) error {
+	email = NormalizeEmail(email)
+	if !govalidator.IsEmail(email) {
+		return errors.New("invalid email")
+	}
+
+	u.Email = email
+	return nil
 }
 
 // ComparePassword 验证密码是否一致

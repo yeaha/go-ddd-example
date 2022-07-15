@@ -39,9 +39,9 @@ func (s *UserService) Create(ctx context.Context, email, password string) (*doma
 	user, err := s.Users.FindByEmail(ctx, domain.NormalizeEmail(email))
 	if errors.Is(err, domain.ErrUserNotFound) {
 		user = &domain.User{}
-		user.SetEmail(email)
-
-		if err := user.SetPassword(password); err != nil {
+		if err := user.SetEmail(email); err != nil {
+			return nil, fmt.Errorf("set email, %w", err)
+		} else if err := user.SetPassword(password); err != nil {
 			return nil, fmt.Errorf("set password, %w", err)
 		} else if err := s.Users.Create(ctx, user); err != nil {
 			return nil, err
