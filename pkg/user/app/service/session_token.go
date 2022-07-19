@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"crypto/md5"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -68,18 +67,11 @@ func (s *SessionTokenService) encode(token domain.SessionToken, salt string) str
 	payload := fmt.Sprintf("%s,%d", token.UserID, token.Expire)
 	signature := s.sign(payload, salt)
 
-	payload = fmt.Sprintf("%s:%s", payload, signature)
-	return base64.RawURLEncoding.EncodeToString([]byte(payload))
+	return fmt.Sprintf("%s;%s", payload, signature)
 }
 
 func (s *SessionTokenService) decode(payload string) (domain.SessionToken, error) {
-	data, err := base64.RawURLEncoding.DecodeString(payload)
-	if err != nil {
-		return domain.SessionToken{}, fmt.Errorf("base64 decode, %w", err)
-	}
-	payload = string(data)
-
-	payload, _, ok := strings.Cut(payload, ":")
+	payload, _, ok := strings.Cut(payload, ";")
 	if !ok {
 		return domain.SessionToken{}, domain.ErrInvalidSessionToken
 	}

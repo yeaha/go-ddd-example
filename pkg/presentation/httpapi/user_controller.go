@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"net/url"
@@ -70,9 +71,10 @@ func (c *userController) DenyAnonymous(next http.Handler) http.Handler {
 }
 
 func (c *userController) writeSessionToken(token string, w http.ResponseWriter) {
+	payload := base64.RawURLEncoding.EncodeToString([]byte(token))
 	http.SetCookie(w, &http.Cookie{
 		Name:     "VISITOR",
-		Value:    token,
+		Value:    payload,
 		Expires:  time.Now().Add(3 * 31 * 24 * time.Hour),
 		HttpOnly: true,
 	})
@@ -80,10 +82,14 @@ func (c *userController) writeSessionToken(token string, w http.ResponseWriter) 
 
 func (c *userController) readSessionToken(r *http.Request) (string, bool) {
 	if cookie, err := r.Cookie("VISITOR"); err == nil {
-		payload := cookie.Value
-		return payload, payload != ""
-	}
+		data, err := base64.RawURLEncoding.DecodeString(cookie.Value)
+		if err != nil {
+			logrus.WithError(err).Debug("base64 decode session token")
+			return "", false
+		}
 
+		return string(data), len(data) > 0
+	}
 	return "", false
 }
 
