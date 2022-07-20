@@ -51,6 +51,7 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 		err = fmt.Errorf("verify by vendor, %w", err)
 		return
 	}
+	vendorUser.Vendor = args.Client.Vendor()
 
 	user, err := h.Oauth.Find(ctx, vendorUser)
 	if errors.Is(err, domain.ErrUserNotFound) {
