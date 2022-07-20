@@ -114,7 +114,7 @@ func (c *userController) LoginWithEmail() http.HandlerFunc {
 
 // Logout 退出登录
 func (c *userController) Logout() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(_ http.ResponseWriter, r *http.Request) {
 		if user, ok := visitorFromCtx(r.Context()); ok {
 			if err := c.App.Handlers.Logout.Handle(r.Context(), user); err != nil {
 				panic(httpkit.WrapError(err))
@@ -145,7 +145,7 @@ func (c *userController) Register() http.HandlerFunc {
 
 // ChangePassword 修改密码
 func (c *userController) ChangePassword() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(_ http.ResponseWriter, r *http.Request) {
 		req := handler.ChangePassword{
 			User: mustVisitorFromCtx(r.Context()),
 		}

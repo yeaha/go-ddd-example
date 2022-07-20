@@ -28,7 +28,6 @@ serve:
 	docker compose up -d && \
 	gow -v -s \
 		run -trimpath ${MKFILE_DIR}cmd/server/ \
-			-dev=true \
 			-logLevel=trace \
 			-logPretty=true \
 			-config=${MKFILE_DIR}configs/server/server.toml \

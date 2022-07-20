@@ -38,15 +38,14 @@ func NewServer(opt *option.Options) *Server {
 }
 
 // Close 关闭服务
-func (s *Server) Close(wg *sync.WaitGroup) {
+func (s *Server) Close(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := s.server.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
-		logrus.WithError(err).Error("shutdown server")
-		return
+		return err
 	}
-	logrus.Info("shutdown server")
+	return nil
 }

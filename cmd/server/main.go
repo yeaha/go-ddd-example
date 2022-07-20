@@ -27,7 +27,6 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&opt.DevMode, "dev", false, "development mode")
 	flag.BoolVar(&opt.LogPretty, "logPretty", false, "output pretty print log")
 	flag.StringVar(&opt.ConfigFile, "config", "", "config file")
 	flag.StringVar(&opt.LogLevel, "logLevel", "", "log level")
@@ -80,7 +79,11 @@ func main() {
 		wg := &sync.WaitGroup{}
 
 		wg.Add(1)
-		server.Close(wg)
+		if err := server.Close(wg); err != nil {
+			logrus.WithError(err).Error("shutdown server")
+		} else {
+			logrus.Info("shutdown server")
+		}
 
 		wg.Wait()
 		os.Exit(0)

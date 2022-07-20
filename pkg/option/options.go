@@ -20,7 +20,6 @@ var (
 type Options struct {
 	// 服务启动参数
 	ConfigFile  string `toml:"-"`
-	DevMode     bool   `toml:"-"`
 	LogLevel    string `toml:"-"`
 	LogPretty   bool   `toml:"-"`
 	MigratePath string `toml:"-"`
