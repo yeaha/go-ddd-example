@@ -34,5 +34,8 @@ func (h *LoginWithEmailHandler) Handle(ctx context.Context, args LoginWithEmail)
 		return
 	}
 
+	domain.PublishEvent(domain.EventLogin{
+		User: user,
+	})
 	return
 }

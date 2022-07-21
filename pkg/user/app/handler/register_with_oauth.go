@@ -34,8 +34,9 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 		return
 	}
 
+	var events []any
 	if err = entity.Transaction(h.DB, func(tx *sqlx.Tx) error {
-		user, err = h.handle(
+		user, events, err = h.handle(
 			ctx, args, vendorUser,
 			service.NewUserService(tx),
 			service.NewOauthService(tx),
@@ -45,10 +46,15 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 		return
 	}
 
+	domain.PublishEvents(events...)
+
 	sessionToken, err = h.Session.Generate(ctx, user)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
 	}
+	domain.PublishEvent(domain.EventLogin{
+		User: user,
+	})
 	return
 }
 
@@ -58,11 +64,17 @@ func (h *RegisterWithOauthHandler) handle(
 	vendorUser *oauth.User,
 	userService *service.UserService,
 	oauthService *service.OauthService,
-) (user *domain.User, err error) {
+) (user *domain.User, events []any, err error) {
 	if args.VerifyPassword != "" {
 		user, err = userService.Authorize(ctx, args.Email, args.VerifyPassword)
 	} else {
 		user, err = userService.Create(ctx, args.Email, uuid.NewV4().String())
+
+		if err == nil {
+			events = append(events, domain.EventRegister{
+				User: user,
+			})
+		}
 	}
 
 	if err != nil {

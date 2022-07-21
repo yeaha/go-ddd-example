@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"os/signal"
@@ -13,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
 	"gitlab.haochang.tv/yangyi/examine-code/pkg/presentation/httpapi"
+	"gitlab.haochang.tv/yangyi/examine-code/pkg/presentation/observer"
 
 	// postgresql database driver
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -67,7 +69,13 @@ func initLogger(opt *option.Options) {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	server := httpapi.NewServer(opt)
+
+	// 领域事件
+	observer.Start(ctx, opt)
 
 	sc := make(chan os.Signal)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
@@ -84,6 +92,9 @@ func main() {
 		} else {
 			logrus.Info("shutdown server")
 		}
+
+		wg.Add(1)
+		observer.Stop(wg)
 
 		wg.Wait()
 		os.Exit(0)
