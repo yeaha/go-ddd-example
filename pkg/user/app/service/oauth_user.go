@@ -12,22 +12,22 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// OauthService 三方账号关联逻辑
-type OauthService struct {
+// OauthUserService 三方账号关联逻辑
+type OauthUserService struct {
 	Users adapter.UserRepository
 	Oauth adapter.OauthRepository
 }
 
-// NewOauthService 构造函数
-func NewOauthService(tx *sqlx.Tx) *OauthService {
-	return &OauthService{
+// NewOauthUserService 构造函数
+func NewOauthUserService(tx *sqlx.Tx) *OauthUserService {
+	return &OauthUserService{
 		Users: infra.NewUserDBRepository(tx),
 		Oauth: infra.NewOauthDBRepository(tx),
 	}
 }
 
 // Find 查询关联账号
-func (s *OauthService) Find(ctx context.Context, vendorUser *oauth.User) (*domain.User, error) {
+func (s *OauthUserService) Find(ctx context.Context, vendorUser *oauth.User) (*domain.User, error) {
 	userID, err := s.Oauth.Find(ctx, vendorUser.Vendor, vendorUser.ID)
 	if err != nil {
 		return nil, fmt.Errorf("find user_id, %w", err)
@@ -37,6 +37,6 @@ func (s *OauthService) Find(ctx context.Context, vendorUser *oauth.User) (*domai
 }
 
 // Bind 绑定账号
-func (s *OauthService) Bind(ctx context.Context, user *domain.User, vendorUser *oauth.User) error {
+func (s *OauthUserService) Bind(ctx context.Context, user *domain.User, vendorUser *oauth.User) error {
 	return s.Oauth.Bind(ctx, user.ID, vendorUser.Vendor, vendorUser.ID)
 }

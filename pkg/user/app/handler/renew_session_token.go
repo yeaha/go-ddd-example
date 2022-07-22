@@ -7,12 +7,12 @@ import (
 	"ddd-example/pkg/user/domain"
 )
 
-// RenewTokenHandler 构造会话凭证
-type RenewTokenHandler struct {
+// RenewSessionTokenHandler 构造会话凭证
+type RenewSessionTokenHandler struct {
 	Session *service.SessionTokenService
 }
 
 // Handle 执行构造会话凭证
-func (h *RenewTokenHandler) Handle(ctx context.Context, user *domain.User) (payload string, err error) {
+func (h *RenewSessionTokenHandler) Handle(ctx context.Context, user *domain.User) (payload string, err error) {
 	return h.Session.Renew(user)
 }

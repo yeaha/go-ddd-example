@@ -37,9 +37,9 @@ func (s *UserService) Authorize(ctx context.Context, email, password string) (*d
 
 // Create 创建新账号
 func (s *UserService) Create(ctx context.Context, email, password string) (*domain.User, error) {
-	user, err := s.Users.FindByEmail(ctx, domain.NormalizeEmail(email))
+	_, err := s.Users.FindByEmail(ctx, domain.NormalizeEmail(email))
 	if errors.Is(err, domain.ErrUserNotFound) {
-		user = &domain.User{}
+		user := &domain.User{}
 		if err := user.SetEmail(email); err != nil {
 			return nil, fmt.Errorf("set email, %w", err)
 		} else if err := user.SetPassword(password); err != nil {

@@ -15,14 +15,14 @@ type Application struct {
 
 // Handlers 业务命令
 type Handlers struct {
-	ChangePassword    *handler.ChangePasswordHandler
-	LoginWithEmail    *handler.LoginWithEmailHandler
-	Logout            *handler.LogoutHandler
-	Register          *handler.RegisterHandler
-	RegisterWithOauth *handler.RegisterWithOauthHandler
-	RenewToken        *handler.RenewTokenHandler
-	RetrieveToken     *handler.RetrieveTokenHandler
-	VerifyOauth       *handler.VerifyOauthHandler
+	ChangePassword       *handler.ChangePasswordHandler
+	LoginWithEmail       *handler.LoginWithEmailHandler
+	Logout               *handler.LogoutHandler
+	Register             *handler.RegisterHandler
+	RegisterWithOauth    *handler.RegisterWithOauthHandler
+	RenewSessionToken    *handler.RenewSessionTokenHandler
+	RetrieveSessionToken *handler.RetrieveSessionTokenHandler
+	VerifyOauth          *handler.VerifyOauthHandler
 }
 
 // Repositories 数据存储

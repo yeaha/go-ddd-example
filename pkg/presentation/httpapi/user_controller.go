@@ -41,7 +41,7 @@ func newUserController(opt *option.Options) *userController {
 func (c *userController) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if payload, ok := c.readSessionToken(r); ok {
-			user, token, err := c.App.Handlers.RetrieveToken.Handle(r.Context(), payload)
+			user, token, err := c.App.Handlers.RetrieveSessionToken.Handle(r.Context(), payload)
 			if err != nil {
 				// 只记录错误，不中断请求
 				logrus.WithError(err).Debug("retrieve session token")
@@ -49,7 +49,7 @@ func (c *userController) Authorize(next http.Handler) http.Handler {
 				r = r.WithContext(context.WithValue(r.Context(), visitorKey, user))
 
 				if token.NeedRenew() {
-					payload, err = c.App.Handlers.RenewToken.Handle(r.Context(), user)
+					payload, err = c.App.Handlers.RenewSessionToken.Handle(r.Context(), user)
 					if err != nil {
 						logrus.WithError(err).Error("renew session token")
 					} else {
@@ -227,10 +227,10 @@ func (c *userController) VerifyOauth() http.HandlerFunc {
 				"user": user,
 			})
 			return
-		} else if token := result.VendorToken; token != "" {
+		} else if token := result.OauthToken; token != "" {
 			// 下发三方验证token，用于后续注册或关联账号
 			httpkit.Render.JSON(w, http.StatusOK, httpkit.M{
-				"vendor_token": token,
+				"oauth_token": token,
 			})
 			return
 		}
@@ -248,9 +248,9 @@ func (c *userController) RegisterWithOauth() http.HandlerFunc {
 
 		user, token, err := c.App.Handlers.RegisterWithOauth.Handle(r.Context(), req)
 		if err != nil {
-			if errors.Is(err, domain.ErrInvalidVendorToken) {
+			if errors.Is(err, domain.ErrInvalidOauthToken) {
 				panic(httpkit.NewError(http.StatusNotAcceptable).WithJSON(httpkit.M{
-					"error": "INVALID_VENDOR_TOKEN",
+					"error": "INVALID_OAUTH_TOKEN",
 				}))
 			} else if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 				panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{

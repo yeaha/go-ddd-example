@@ -27,7 +27,7 @@ var (
 	)
 
 	serviceSet = wire.NewSet(
-		wire.Struct(new(service.OauthService), "*"),
+		wire.Struct(new(service.OauthUserService), "*"),
 		wire.Struct(new(service.OauthTokenService), "*"),
 		wire.Struct(new(service.SessionTokenService), "*"),
 		wire.Struct(new(service.UserService), "*"),
@@ -47,8 +47,8 @@ var (
 		wire.Struct(new(handler.LogoutHandler), "*"),
 		wire.Struct(new(handler.RegisterHandler), "*"),
 		wire.Struct(new(handler.RegisterWithOauthHandler), "*"),
-		wire.Struct(new(handler.RenewTokenHandler), "*"),
-		wire.Struct(new(handler.RetrieveTokenHandler), "*"),
+		wire.Struct(new(handler.RenewSessionTokenHandler), "*"),
+		wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"),
 		wire.Struct(new(handler.VerifyOauthHandler), "*"),
 		wire.Struct(new(Handlers), "*"),
 	)

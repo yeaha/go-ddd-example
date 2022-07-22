@@ -28,12 +28,12 @@ type VerifyOauthResult struct {
 	// 会话凭证
 	SessionToken string
 	// 三方账号的缓存凭证，后续使用这个凭证可以注册新账号或者绑定已有账号
-	VendorToken string
+	OauthToken string
 }
 
 // VerifyOauthHandler 三方登录验证
 type VerifyOauthHandler struct {
-	Oauth      *service.OauthService
+	OauthUser  *service.OauthUserService
 	OauthToken *service.OauthTokenService
 	Session    *service.SessionTokenService
 }
@@ -53,16 +53,16 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 	}
 	vendorUser.Vendor = args.Client.Vendor()
 
-	user, err := h.Oauth.Find(ctx, vendorUser)
+	user, err := h.OauthUser.Find(ctx, vendorUser)
 	if errors.Is(err, domain.ErrUserNotFound) {
-		var vendorToken string
+		var oauthToken string
 
-		vendorToken, err = h.OauthToken.Save(ctx, vendorUser)
+		oauthToken, err = h.OauthToken.Save(ctx, vendorUser)
 		if err != nil {
 			err = fmt.Errorf("cache vendor user, %w", err)
 			return
 		}
-		result.VendorToken = vendorToken
+		result.OauthToken = oauthToken
 		return
 	} else if err != nil {
 		err = fmt.Errorf("find user by vendor uid, %w", err)

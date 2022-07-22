@@ -7,13 +7,13 @@
 package app
 
 import (
-	"github.com/google/wire"
-	"github.com/jmoiron/sqlx"
-	"github.com/joyparty/entity"
 	"ddd-example/pkg/user/app/adapter"
 	"ddd-example/pkg/user/app/handler"
 	"ddd-example/pkg/user/app/service"
 	"ddd-example/pkg/user/infra"
+	"github.com/google/wire"
+	"github.com/jmoiron/sqlx"
+	"github.com/joyparty/entity"
 )
 
 // Injectors from wire.go:
@@ -56,31 +56,31 @@ func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
 		Session:    sessionTokenService,
 		OauthToken: oauthTokenService,
 	}
-	renewTokenHandler := &handler.RenewTokenHandler{
+	renewSessionTokenHandler := &handler.RenewSessionTokenHandler{
 		Session: sessionTokenService,
 	}
-	retrieveTokenHandler := &handler.RetrieveTokenHandler{
+	retrieveSessionTokenHandler := &handler.RetrieveSessionTokenHandler{
 		Session: sessionTokenService,
 	}
 	oauthDBRepository := infra.NewOauthDBRepository(dbi)
-	oauthService := &service.OauthService{
+	oauthUserService := &service.OauthUserService{
 		Users: userDBRepository,
 		Oauth: oauthDBRepository,
 	}
 	verifyOauthHandler := &handler.VerifyOauthHandler{
-		Oauth:      oauthService,
+		OauthUser:  oauthUserService,
 		OauthToken: oauthTokenService,
 		Session:    sessionTokenService,
 	}
 	handlers := Handlers{
-		ChangePassword:    changePasswordHandler,
-		LoginWithEmail:    loginWithEmailHandler,
-		Logout:            logoutHandler,
-		Register:          registerHandler,
-		RegisterWithOauth: registerWithOauthHandler,
-		RenewToken:        renewTokenHandler,
-		RetrieveToken:     retrieveTokenHandler,
-		VerifyOauth:       verifyOauthHandler,
+		ChangePassword:       changePasswordHandler,
+		LoginWithEmail:       loginWithEmailHandler,
+		Logout:               logoutHandler,
+		Register:             registerHandler,
+		RegisterWithOauth:    registerWithOauthHandler,
+		RenewSessionToken:    renewSessionTokenHandler,
+		RetrieveSessionToken: retrieveSessionTokenHandler,
+		VerifyOauth:          verifyOauthHandler,
 	}
 	return handlers
 }
@@ -91,7 +91,7 @@ var (
 	repositoriesSet = wire.NewSet(wire.NewSet(infra.NewUserDBRepository, wire.Bind(new(adapter.UserRepository), new(*infra.UserDBRepository))), wire.NewSet(infra.NewOauthDBRepository, wire.Bind(new(adapter.OauthRepository), new(*infra.OauthDBRepository))),
 	)
 
-	serviceSet = wire.NewSet(wire.Struct(new(service.OauthService), "*"), wire.Struct(new(service.OauthTokenService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
+	serviceSet = wire.NewSet(wire.Struct(new(service.OauthUserService), "*"), wire.Struct(new(service.OauthTokenService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
 
 	repositoriesProvider = wire.NewSet(
 		repositoriesSet, wire.Struct(new(Repositories), "*"),
@@ -99,6 +99,6 @@ var (
 
 	handlersProvider = wire.NewSet(
 		repositoriesSet,
-		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewTokenHandler), "*"), wire.Struct(new(handler.RetrieveTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Handlers), "*"),
+		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewSessionTokenHandler), "*"), wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Handlers), "*"),
 	)
 )

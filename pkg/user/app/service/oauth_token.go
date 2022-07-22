@@ -37,7 +37,7 @@ func (s *OauthTokenService) Retrieve(ctx context.Context, token string) (*oauth.
 	value, err := s.Cache.Get(ctx, token)
 	if err != nil {
 		if errors.Is(err, domain.ErrMissingCache) {
-			return nil, domain.ErrInvalidVendorToken
+			return nil, domain.ErrInvalidOauthToken
 		}
 		return nil, err
 	}
