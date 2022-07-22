@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"errors"
 
+	"ddd-example/pkg/user/domain"
+
 	"github.com/doug-martin/goqu/v9"
 	"github.com/joyparty/entity"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 // OauthDBRepository 三方账号，数据库存储

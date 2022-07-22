@@ -8,13 +8,14 @@ import (
 	"net/url"
 	"time"
 
+	"ddd-example/pkg/option"
+	"ddd-example/pkg/user/app"
+	"ddd-example/pkg/user/app/handler"
+	"ddd-example/pkg/user/domain"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 var (

@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
-	userApp "gitlab.haochang.tv/yangyi/examine-code/pkg/user/app"
-	user "gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"ddd-example/pkg/option"
+	userApp "ddd-example/pkg/user/app"
+	user "ddd-example/pkg/user/domain"
 )
 
 // Start 启动领域事件观察者

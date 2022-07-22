@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"ddd-example/pkg/user/app/service"
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/utils/oauth"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
 // RegisterWithOauth 三方账号注册，参数

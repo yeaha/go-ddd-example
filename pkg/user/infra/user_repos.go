@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/utils/database"
+
 	"github.com/jackc/pgtype"
 	"github.com/joyparty/entity"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/database"
 )
 
 // UserDBRepository 用户账号，数据库存储

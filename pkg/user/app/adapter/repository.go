@@ -3,8 +3,9 @@ package adapter
 import (
 	"context"
 
+	"ddd-example/pkg/user/domain"
+
 	uuid "github.com/satori/go.uuid"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 // UserRepository 账号信息存储

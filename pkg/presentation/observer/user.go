@@ -3,10 +3,11 @@ package observer
 import (
 	"context"
 
+	"ddd-example/pkg/user/app"
+	"ddd-example/pkg/user/domain"
+
 	"github.com/reactivex/rxgo/v2"
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 // 在用户注册成功之后发送邮件

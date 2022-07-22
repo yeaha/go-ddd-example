@@ -8,10 +8,11 @@ import (
 	"database/sql"
 	"testing"
 
+	"ddd-example/pkg/user/domain"
+
 	"github.com/jmoiron/sqlx"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/suite"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 func TestOauthDBRepository(t *testing.T) {

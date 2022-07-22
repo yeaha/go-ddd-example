@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/domain"
 )
 
 // ChangePassword 替换密码，参数

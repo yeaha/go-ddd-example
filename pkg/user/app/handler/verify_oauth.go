@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
+	"ddd-example/pkg/user/app/service"
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/utils/oauth"
 )
 
 // VerifyOauth 三方登录验证，参数

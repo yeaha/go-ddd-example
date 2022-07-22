@@ -10,12 +10,13 @@ import (
 	"os"
 	"testing"
 
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/utils/database"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
 	"github.com/stretchr/testify/suite"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/database"
 
 	// postgresql database driver
 	_ "github.com/jackc/pgx/v4/stdlib"

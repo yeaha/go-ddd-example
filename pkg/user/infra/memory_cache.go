@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	"ddd-example/pkg/user/domain"
+
 	"github.com/pmylund/go-cache"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 // MemoryCache 本地内存缓存

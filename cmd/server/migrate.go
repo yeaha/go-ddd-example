@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"ddd-example/pkg/option"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
 
 	// database migrate
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"

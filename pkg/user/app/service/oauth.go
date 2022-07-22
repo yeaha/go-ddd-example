@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/user/infra"
+	"ddd-example/pkg/utils/oauth"
+
 	"github.com/jmoiron/sqlx"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
 // OauthService 三方账号关联逻辑

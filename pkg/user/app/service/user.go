@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/user/infra"
+
 	"github.com/jmoiron/sqlx"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
 )
 
 // UserService 账号逻辑

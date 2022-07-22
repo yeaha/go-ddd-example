@@ -1,10 +1,10 @@
 package app
 
 import (
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
+	"ddd-example/pkg/option"
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/app/handler"
+	"ddd-example/pkg/user/infra"
 )
 
 // Application 账号模块业务逻辑

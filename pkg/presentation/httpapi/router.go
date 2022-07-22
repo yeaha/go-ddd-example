@@ -1,10 +1,11 @@
 package httpapi
 
 import (
+	"ddd-example/pkg/option"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
 )
 
 func newRouter(opt *option.Options) chi.Router {

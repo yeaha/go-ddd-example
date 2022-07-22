@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"ddd-example/pkg/option"
+
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
 )
 
 // Server http服务

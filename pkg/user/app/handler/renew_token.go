@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"ddd-example/pkg/user/app/service"
+	"ddd-example/pkg/user/domain"
 )
 
 // RenewTokenHandler 构造会话凭证

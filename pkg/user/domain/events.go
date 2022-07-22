@@ -3,9 +3,10 @@ package domain
 import (
 	"reflect"
 
+	"ddd-example/pkg/utils/events"
+
 	"github.com/reactivex/rxgo/v2"
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/events"
 )
 
 var (

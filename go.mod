@@ -1,4 +1,4 @@
-module gitlab.haochang.tv/yangyi/examine-code
+module ddd-example
 
 go 1.18
 

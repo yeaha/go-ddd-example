@@ -3,9 +3,10 @@ package service
 import (
 	"testing"
 
+	"ddd-example/pkg/user/domain"
+
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 func TestSessionTokenService(t *testing.T) {

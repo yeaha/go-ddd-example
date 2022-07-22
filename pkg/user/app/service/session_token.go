@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"strings"
 
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/domain"
+
 	uuid "github.com/satori/go.uuid"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
 )
 
 // SessionTokenService 会话凭证逻辑

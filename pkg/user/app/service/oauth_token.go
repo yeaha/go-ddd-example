@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"time"
 
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/utils/oauth"
+
 	uuid "github.com/satori/go.uuid"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
 // OauthTokenService 三方验证结果缓存

@@ -4,13 +4,14 @@
 package app
 
 import (
+	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/app/handler"
+	"ddd-example/pkg/user/app/service"
+	"ddd-example/pkg/user/infra"
+
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/adapter"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/handler"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/infra"
 )
 
 var (

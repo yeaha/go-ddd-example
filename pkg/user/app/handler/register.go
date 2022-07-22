@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/app/service"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/user/domain"
+	"ddd-example/pkg/user/app/service"
+	"ddd-example/pkg/user/domain"
 )
 
 // Register 账号注册，参数

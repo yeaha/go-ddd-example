@@ -6,10 +6,11 @@ import (
 	"io"
 	"os"
 
+	"ddd-example/pkg/utils/database"
+	"ddd-example/pkg/utils/oauth"
+
 	"github.com/BurntSushi/toml"
 	"github.com/jmoiron/sqlx"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/database"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/utils/oauth"
 )
 
 var (

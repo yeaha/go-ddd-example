@@ -8,13 +8,14 @@ import (
 	"sync"
 	"syscall"
 
+	"ddd-example/pkg/option"
+	"ddd-example/pkg/presentation/httpapi"
+	"ddd-example/pkg/presentation/observer"
+
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
 	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/option"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/presentation/httpapi"
-	"gitlab.haochang.tv/yangyi/examine-code/pkg/presentation/observer"
 
 	// postgresql database driver
 	_ "github.com/jackc/pgx/v4/stdlib"
