@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"ddd-example/pkg/user/app/adapter"
 	"ddd-example/pkg/user/app/service"
 	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/user/infra"
 	"ddd-example/pkg/utils/oauth"
 
 	"github.com/jmoiron/sqlx"
@@ -40,7 +42,7 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 		user, events, err = h.handle(
 			ctx, args, vendorUser,
 			service.NewUserService(tx),
-			service.NewOauthUserService(tx),
+			infra.NewOauthDBRepository(tx),
 		)
 		return err
 	}); err != nil {
@@ -64,7 +66,7 @@ func (h *RegisterWithOauthHandler) handle(
 	args RegisterWithOauth,
 	vendorUser *oauth.User,
 	userService *service.UserService,
-	oauthUserService *service.OauthUserService,
+	oauthRepos adapter.OauthRepository,
 ) (user *domain.User, events []any, err error) {
 	if args.VerifyPassword != "" {
 		user, err = userService.Authorize(ctx, args.Email, args.VerifyPassword)
@@ -82,7 +84,7 @@ func (h *RegisterWithOauthHandler) handle(
 		return
 	}
 
-	if err = oauthUserService.Bind(ctx, user, vendorUser); err != nil {
+	if err = oauthRepos.Bind(ctx, user.ID, vendorUser.Vendor, vendorUser.ID); err != nil {
 		err = fmt.Errorf("bound vendor user, %w", err)
 	}
 	return

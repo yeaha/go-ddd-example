@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"ddd-example/pkg/user/app/adapter"
 	"ddd-example/pkg/user/app/service"
 	"ddd-example/pkg/user/domain"
 	"ddd-example/pkg/utils/oauth"
@@ -33,9 +34,10 @@ type VerifyOauthResult struct {
 
 // VerifyOauthHandler 三方登录验证
 type VerifyOauthHandler struct {
-	OauthUser  *service.OauthUserService
 	OauthToken *service.OauthTokenService
 	Session    *service.SessionTokenService
+	Oauth      adapter.OauthRepository
+	Users      adapter.UserRepository
 }
 
 // Handle 验证三方登录
@@ -53,7 +55,7 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 	}
 	vendorUser.Vendor = args.Client.Vendor()
 
-	user, err := h.OauthUser.Find(ctx, vendorUser)
+	user, err := h.findUser(ctx, vendorUser)
 	if errors.Is(err, domain.ErrUserNotFound) {
 		var oauthToken string
 
@@ -78,4 +80,13 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 	result.User = user
 	result.SessionToken = sessionToken
 	return
+}
+
+func (h *VerifyOauthHandler) findUser(ctx context.Context, vendorUser *oauth.User) (*domain.User, error) {
+	userID, err := h.Oauth.Find(ctx, vendorUser.Vendor, vendorUser.ID)
+	if err != nil {
+		return nil, fmt.Errorf("find user id, %w", err)
+	}
+
+	return h.Users.Find(ctx, userID)
 }

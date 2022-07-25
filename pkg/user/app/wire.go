@@ -27,7 +27,6 @@ var (
 	)
 
 	serviceSet = wire.NewSet(
-		wire.Struct(new(service.OauthUserService), "*"),
 		wire.Struct(new(service.OauthTokenService), "*"),
 		wire.Struct(new(service.SessionTokenService), "*"),
 		wire.Struct(new(service.UserService), "*"),
