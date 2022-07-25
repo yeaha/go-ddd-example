@@ -18,7 +18,7 @@ test:
 alltest:
 	cd ${MKFILE_DIR}
 	docker compose up -d && \
-	TESTDB="postgres://examine:examine@127.0.0.1:5432/examine?sslmode=disable" \
+	TESTDB="postgres://example:example@127.0.0.1:5432/example?sslmode=disable" \
 		go test -tags=dbtest -v ./... | grep -v '^?'
 
 # go install github.com/mitranim/gow@latest
@@ -35,7 +35,7 @@ serve:
 
 .PHONY: db_cli
 db_cli:
-	cd ${MKFILE_DIR} && docker compose exec postgres psql -U examine -d examine
+	cd ${MKFILE_DIR} && docker compose exec postgres psql -U example -d example
 
 .PHONY: clean
 clean:
