@@ -32,12 +32,7 @@ var (
 		wire.Struct(new(service.UserService), "*"),
 	)
 
-	repositoriesProvider = wire.NewSet(
-		repositoriesSet,
-		wire.Struct(new(Repositories), "*"),
-	)
-
-	handlersProvider = wire.NewSet(
+	applicationProvider = wire.NewSet(
 		repositoriesSet,
 		serviceSet,
 
@@ -49,16 +44,13 @@ var (
 		wire.Struct(new(handler.RenewSessionTokenHandler), "*"),
 		wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"),
 		wire.Struct(new(handler.VerifyOauthHandler), "*"),
-		wire.Struct(new(Handlers), "*"),
+
+		wire.Struct(new(Repositories), "*"),
+		wire.Struct(new(Application), "*"),
 	)
 )
 
-func initRepositories(dbi entity.DB) Repositories {
-	wire.Build(repositoriesProvider)
-	return Repositories{}
-}
-
-func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
-	wire.Build(handlersProvider)
-	return Handlers{}
+func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Application {
+	wire.Build(applicationProvider)
+	return &Application{}
 }

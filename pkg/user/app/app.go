@@ -10,11 +10,7 @@ import (
 // Application 账号模块业务逻辑
 type Application struct {
 	Repositories Repositories
-	Handlers     Handlers
-}
 
-// Handlers 业务命令
-type Handlers struct {
 	ChangePassword       *handler.ChangePasswordHandler
 	LoginWithEmail       *handler.LoginWithEmailHandler
 	Logout               *handler.LogoutHandler
@@ -33,9 +29,7 @@ type Repositories struct {
 // NewApplication 构造函数
 func NewApplication(opt *option.Options) *Application {
 	db := opt.GetDB()
+	cache := infra.NewMemoryCache()
 
-	return &Application{
-		Repositories: initRepositories(db),
-		Handlers:     initHandlers(db, db, infra.NewMemoryCache()),
-	}
+	return initApplication(db, db, cache)
 }

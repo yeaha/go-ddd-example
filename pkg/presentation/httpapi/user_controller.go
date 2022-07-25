@@ -41,7 +41,7 @@ func newUserController(opt *option.Options) *userController {
 func (c *userController) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if payload, ok := c.readSessionToken(r); ok {
-			user, token, err := c.App.Handlers.RetrieveSessionToken.Handle(r.Context(), payload)
+			user, token, err := c.App.RetrieveSessionToken.Handle(r.Context(), payload)
 			if err != nil {
 				// 只记录错误，不中断请求
 				logrus.WithError(err).Debug("retrieve session token")
@@ -49,7 +49,7 @@ func (c *userController) Authorize(next http.Handler) http.Handler {
 				r = r.WithContext(context.WithValue(r.Context(), visitorKey, user))
 
 				if token.NeedRenew() {
-					payload, err = c.App.Handlers.RenewSessionToken.Handle(r.Context(), user)
+					payload, err = c.App.RenewSessionToken.Handle(r.Context(), user)
 					if err != nil {
 						logrus.WithError(err).Error("renew session token")
 					} else {
@@ -100,7 +100,7 @@ func (c *userController) LoginWithEmail() http.HandlerFunc {
 		req := handler.LoginWithEmail{}
 		httpkit.MustScanJSON(&req, r.Body)
 
-		_, token, err := c.App.Handlers.LoginWithEmail.Handle(r.Context(), req)
+		_, token, err := c.App.LoginWithEmail.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 				panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{
@@ -117,7 +117,7 @@ func (c *userController) LoginWithEmail() http.HandlerFunc {
 func (c *userController) Logout() http.HandlerFunc {
 	return func(_ http.ResponseWriter, r *http.Request) {
 		if user, ok := visitorFromCtx(r.Context()); ok {
-			if err := c.App.Handlers.Logout.Handle(r.Context(), user); err != nil {
+			if err := c.App.Logout.Handle(r.Context(), user); err != nil {
 				panic(httpkit.WrapError(err))
 			}
 		}
@@ -130,7 +130,7 @@ func (c *userController) Register() http.HandlerFunc {
 		req := handler.Register{}
 		httpkit.MustScanJSON(&req, r.Body)
 
-		_, token, err := c.App.Handlers.Register.Handle(r.Context(), req)
+		_, token, err := c.App.Register.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrEmailRegistered) {
 				panic(httpkit.NewError(http.StatusConflict).WithJSON(httpkit.M{
@@ -152,7 +152,7 @@ func (c *userController) ChangePassword() http.HandlerFunc {
 		}
 		httpkit.MustScanJSON(&req, r.Body)
 
-		if err := c.App.Handlers.ChangePassword.Handle(r.Context(), req); err != nil {
+		if err := c.App.ChangePassword.Handle(r.Context(), req); err != nil {
 			if errors.Is(err, domain.ErrWrongPassword) {
 				panic(httpkit.NewError(http.StatusNotAcceptable).WithJSON(httpkit.M{
 					"error": "INCORRECT_OLD_PASSWORD",
@@ -217,7 +217,7 @@ func (c *userController) VerifyOauth() http.HandlerFunc {
 		}
 		req.Query = query
 
-		result, err := c.App.Handlers.VerifyOauth.Handle(r.Context(), req)
+		result, err := c.App.VerifyOauth.Handle(r.Context(), req)
 		if err != nil {
 			panic(httpkit.WrapError(err))
 		} else if user := result.User; user != nil {
@@ -246,7 +246,7 @@ func (c *userController) RegisterWithOauth() http.HandlerFunc {
 		req := handler.RegisterWithOauth{}
 		httpkit.MustScanJSON(&req, r.Body)
 
-		user, token, err := c.App.Handlers.RegisterWithOauth.Handle(r.Context(), req)
+		user, token, err := c.App.RegisterWithOauth.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrInvalidOauthToken) {
 				panic(httpkit.NewError(http.StatusNotAcceptable).WithJSON(httpkit.M{

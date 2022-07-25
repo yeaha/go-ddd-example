@@ -18,16 +18,11 @@ import (
 
 // Injectors from wire.go:
 
-func initRepositories(dbi entity.DB) Repositories {
+func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Application {
 	userDBRepository := infra.NewUserDBRepository(dbi)
 	repositories := Repositories{
 		Users: userDBRepository,
 	}
-	return repositories
-}
-
-func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
-	userDBRepository := infra.NewUserDBRepository(dbi)
 	changePasswordHandler := &handler.ChangePasswordHandler{
 		User: userDBRepository,
 	}
@@ -69,7 +64,8 @@ func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
 		Oauth:      oauthDBRepository,
 		Users:      userDBRepository,
 	}
-	handlers := Handlers{
+	application := &Application{
+		Repositories:         repositories,
 		ChangePassword:       changePasswordHandler,
 		LoginWithEmail:       loginWithEmailHandler,
 		Logout:               logoutHandler,
@@ -79,7 +75,7 @@ func initHandlers(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) Handlers {
 		RetrieveSessionToken: retrieveSessionTokenHandler,
 		VerifyOauth:          verifyOauthHandler,
 	}
-	return handlers
+	return application
 }
 
 // wire.go:
@@ -90,12 +86,8 @@ var (
 
 	serviceSet = wire.NewSet(wire.Struct(new(service.OauthTokenService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
 
-	repositoriesProvider = wire.NewSet(
-		repositoriesSet, wire.Struct(new(Repositories), "*"),
-	)
-
-	handlersProvider = wire.NewSet(
+	applicationProvider = wire.NewSet(
 		repositoriesSet,
-		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewSessionTokenHandler), "*"), wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Handlers), "*"),
+		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewSessionTokenHandler), "*"), wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Repositories), "*"), wire.Struct(new(Application), "*"),
 	)
 )
