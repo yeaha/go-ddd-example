@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"flag"
 	"os"
 	"os/signal"
@@ -11,13 +12,15 @@ import (
 	"ddd-example/pkg/option"
 	"ddd-example/pkg/presentation/httpapi"
 	"ddd-example/pkg/presentation/observer"
+	"ddd-example/pkg/utils/database"
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
 	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
 
-	// postgresql database driver
+	// database driver
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/jackc/pgx/v4/stdlib"
 
 	// sql dialect
@@ -27,13 +30,15 @@ import (
 var (
 	// 系统配置
 	opt = &option.Options{}
+
+	//go:embed migrate/*
+	migrateFiles embed.FS
 )
 
 func init() {
 	flag.BoolVar(&opt.LogPretty, "logPretty", false, "output pretty print log")
 	flag.StringVar(&opt.ConfigFile, "config", "", "config file")
 	flag.StringVar(&opt.LogLevel, "logLevel", "", "log level")
-	flag.StringVar(&opt.MigratePath, "migrate", "", "database migrate file path")
 	flag.Parse()
 
 	initLogger(opt)
@@ -44,7 +49,7 @@ func init() {
 		logrus.WithError(err).Fatal("load config file")
 	} else if err := opt.Prepare(); err != nil {
 		logrus.WithError(err).Fatal("prepare resources")
-	} else if err := dbMigrate(opt); err != nil {
+	} else if err := database.Migrate(migrateFiles, "migrate", opt.Database.DSN); err != nil {
 		logrus.WithError(err).Fatal("database migrate")
 	}
 

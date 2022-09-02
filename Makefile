@@ -30,8 +30,7 @@ serve:
 		run -trimpath ${MKFILE_DIR}cmd/server/ \
 			-logLevel=trace \
 			-logPretty=true \
-			-config=${MKFILE_DIR}configs/server/server.toml \
-			-migrate=${MKFILE_DIR}configs/db_migrate/
+			-config=${MKFILE_DIR}configs/server/server.toml
 
 .PHONY: db_cli
 db_cli:
