@@ -4,3 +4,4 @@
 vendor/*
 cmd/test/*
 build/dist/*
+website/node_modules/*
