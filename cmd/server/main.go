@@ -16,7 +16,6 @@ import (
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
-	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
 
 	// database driver
@@ -55,8 +54,6 @@ func init() {
 
 	// 实体对象，默认使用本地内存缓存
 	entity.DefaultCacher = cache.NewMemoryCache()
-
-	httpkit.RequestDecoder.SetAliasTag("json")
 }
 
 func initLogger(opt *option.Options) {

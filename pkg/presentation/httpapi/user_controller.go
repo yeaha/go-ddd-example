@@ -14,7 +14,6 @@ import (
 	"ddd-example/pkg/user/domain"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
 )
 
@@ -98,29 +97,31 @@ func (c *userController) readSessionToken(r *http.Request) (string, bool) {
 func (c *userController) LoginWithEmail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.LoginWithEmail{}
-		httpkit.MustScanJSON(&req, r.Body)
+		mustScanJSON(&req, r.Body)
 
 		_, token, err := c.App.LoginWithEmail.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
-				panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{
-					"error": "LOGIN_UNAUTHORIZED",
-				}))
+				panic(errUnauthorized)
 			}
-			panic(httpkit.WrapError(err))
+			panic(errUnexpectedException.WrapError(err))
 		}
+
 		c.writeSessionToken(token, w)
+		sendResponse(w, withStatusCode(http.StatusCreated))
 	}
 }
 
 // Logout 退出登录
 func (c *userController) Logout() http.HandlerFunc {
-	return func(_ http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if user, ok := visitorFromCtx(r.Context()); ok {
 			if err := c.App.Logout.Handle(r.Context(), user); err != nil {
-				panic(httpkit.WrapError(err))
+				panic(errUnexpectedException.WrapError(err))
 			}
 		}
+
+		sendResponse(w)
 	}
 }
 
@@ -128,19 +129,18 @@ func (c *userController) Logout() http.HandlerFunc {
 func (c *userController) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.Register{}
-		httpkit.MustScanJSON(&req, r.Body)
+		mustScanJSON(&req, r.Body)
 
 		_, token, err := c.App.Register.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrEmailRegistered) {
-				panic(httpkit.NewError(http.StatusConflict).WithJSON(httpkit.M{
-					"error": "EMAIL_REGISTERED",
-				}))
+				panic(errEmailRegistered)
 			}
-
-			panic(httpkit.WrapError(err))
+			panic(errUnexpectedException.WrapError(err))
 		}
+
 		c.writeSessionToken(token, w)
+		sendResponse(w, withStatusCode(http.StatusCreated))
 	}
 }
 
@@ -150,15 +150,13 @@ func (c *userController) ChangePassword() http.HandlerFunc {
 		req := handler.ChangePassword{
 			User: mustVisitorFromCtx(r.Context()),
 		}
-		httpkit.MustScanJSON(&req, r.Body)
+		mustScanJSON(&req, r.Body)
 
 		if err := c.App.ChangePassword.Handle(r.Context(), req); err != nil {
 			if errors.Is(err, domain.ErrWrongPassword) {
-				panic(httpkit.NewError(http.StatusNotAcceptable).WithJSON(httpkit.M{
-					"error": "INCORRECT_OLD_PASSWORD",
-				}))
+				panic(errWrongPassword)
 			}
-			panic(httpkit.WrapError(err))
+			panic(errUnexpectedException.WrapError(err))
 		}
 	}
 }
@@ -167,7 +165,8 @@ func (c *userController) ChangePassword() http.HandlerFunc {
 func (c *userController) MyIdentity() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		visitor := mustVisitorFromCtx(r.Context())
-		httpkit.Render.JSON(w, http.StatusOK, visitor)
+
+		sendResponse(w, withData(visitor))
 	}
 }
 
@@ -176,19 +175,17 @@ func (c *userController) LoginWithOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		client, ok := c.opt.GetOauthClient(chi.URLParam(r, "site"))
 		if !ok {
-			panic(httpkit.NewError(http.StatusNotFound).WithJSON(httpkit.M{
-				"error": "NOT_IMPLEMENTED",
-			}))
+			panic(errOauthNotSupport)
 		}
 
 		req := struct {
 			RedirectURI string `json:"redirect_uri" valid:"url,required"` // FIXME: 检查重定向地址域名有效性，防止钓鱼劫持
 		}{}
-		httpkit.MustScanValue(&req, r.URL.Query())
+		mustScanValues(&req, r.URL.Query())
 
-		httpkit.Render.JSON(w, http.StatusOK, httpkit.M{
+		sendResponse(w, withData(mapAny{
 			"next_url": client.AuthorizeURL(req.RedirectURI).String(),
-		})
+		}))
 	}
 }
 
@@ -199,44 +196,43 @@ func (c *userController) VerifyOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		client, ok := c.opt.GetOauthClient(chi.URLParam(r, "site"))
 		if !ok {
-			panic(httpkit.NewError(http.StatusNotFound).WithJSON(httpkit.M{
-				"error": "NOT_IMPLEMENTED",
-			}))
+			panic(errOauthNotSupport)
 		}
 
 		req := handler.VerifyOauth{
 			Client: client,
 		}
-		httpkit.MustScanJSON(&req, r.Body)
+		mustScanJSON(&req, r.Body)
 
 		query, err := url.ParseQuery(req.RawQuery)
 		if err != nil {
-			panic(httpkit.WrapError(err).WithStatus(http.StatusBadRequest))
+			panic(errBadRequest.WrapError(err))
 		} else if code := query.Get("code"); code == "" {
-			panic(httpkit.WrapError(err).WithStatus(http.StatusBadRequest))
+			panic(errBadRequest.WrapError(err))
 		}
 		req.Query = query
 
 		result, err := c.App.VerifyOauth.Handle(r.Context(), req)
 		if err != nil {
-			panic(httpkit.WrapError(err))
+			panic(errUnexpectedException.WrapError(err))
 		} else if user := result.User; user != nil {
 			// 下发会话凭证及登录账号信息
 			c.writeSessionToken(result.SessionToken, w)
-			httpkit.Render.JSON(w, http.StatusOK, httpkit.M{
+
+			sendResponse(w, withData(mapAny{
 				"user": user,
-			})
+			}))
 			return
 		} else if token := result.OauthToken; token != "" {
 			// 下发三方验证token，用于后续注册或关联账号
-			httpkit.Render.JSON(w, http.StatusOK, httpkit.M{
+			sendResponse(w, withData(mapAny{
 				"oauth_token": token,
-			})
+			}))
 			return
 		}
 
 		// 不应该走到这里
-		panic(httpkit.WrapError(errors.New("oops")))
+		panic(errUnexpectedException.WrapError(errors.New("oops")))
 	}
 }
 
@@ -244,31 +240,25 @@ func (c *userController) VerifyOauth() http.HandlerFunc {
 func (c *userController) RegisterWithOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.RegisterWithOauth{}
-		httpkit.MustScanJSON(&req, r.Body)
+		mustScanJSON(&req, r.Body)
 
 		user, token, err := c.App.RegisterWithOauth.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrInvalidOauthToken) {
-				panic(httpkit.NewError(http.StatusNotAcceptable).WithJSON(httpkit.M{
-					"error": "INVALID_OAUTH_TOKEN",
-				}))
+				panic(errInvalidOauthToken)
 			} else if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
-				panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{
-					"error": "LOGIN_UNAUTHORIZED",
-				}))
+				panic(errUnauthorized)
 			} else if errors.Is(err, domain.ErrEmailRegistered) {
-				panic(httpkit.NewError(http.StatusConflict).WithJSON(httpkit.M{
-					"error": "EMAIL_REGISTERED",
-				}))
+				panic(errEmailRegistered)
 			}
 
-			panic(httpkit.WrapError(err))
+			panic(errUnexpectedException.WrapError(err))
 		}
 
 		c.writeSessionToken(token, w)
-		httpkit.Render.JSON(w, http.StatusOK, httpkit.M{
+		sendResponse(w, withData(mapAny{
 			"user": user,
-		})
+		}))
 	}
 }
 
@@ -280,9 +270,7 @@ func visitorFromCtx(ctx context.Context) (*domain.User, bool) {
 func mustVisitorFromCtx(ctx context.Context) *domain.User {
 	user, ok := visitorFromCtx(ctx)
 	if !ok {
-		panic(httpkit.NewError(http.StatusUnauthorized).WithJSON(httpkit.M{
-			"error": "DENY_ANONYMOUS",
-		}))
+		panic(errUnauthorized)
 	}
 	return user
 }

@@ -4,14 +4,13 @@ import (
 	"ddd-example/pkg/option"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/joyparty/httpkit"
 	"github.com/sirupsen/logrus"
 )
 
 func newRouter(opt *option.Options) chi.Router {
 	router := chi.NewRouter()
 
-	router.Use(httpkit.Recoverer(logrus.StandardLogger()))
+	router.Use(recoverer(logrus.StandardLogger()))
 
 	uc := newUserController(opt)
 	router.Use(uc.Authorize)
