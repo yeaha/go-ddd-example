@@ -9,7 +9,7 @@ import (
 
 // Application 账号模块业务逻辑
 type Application struct {
-	Repositories Repositories
+	UserRepository adapter.UserRepository
 
 	ChangePassword       *handler.ChangePasswordHandler
 	LoginWithEmail       *handler.LoginWithEmailHandler
@@ -19,11 +19,6 @@ type Application struct {
 	RenewSessionToken    *handler.RenewSessionTokenHandler
 	RetrieveSessionToken *handler.RetrieveSessionTokenHandler
 	VerifyOauth          *handler.VerifyOauthHandler
-}
-
-// Repositories 数据存储
-type Repositories struct {
-	Users adapter.UserRepository
 }
 
 // NewApplication 构造函数

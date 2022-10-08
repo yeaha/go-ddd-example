@@ -20,9 +20,6 @@ import (
 
 func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Application {
 	userDBRepository := infra.NewUserDBRepository(dbi)
-	repositories := Repositories{
-		Users: userDBRepository,
-	}
 	changePasswordHandler := &handler.ChangePasswordHandler{
 		User: userDBRepository,
 	}
@@ -65,7 +62,7 @@ func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Applicat
 		Users:      userDBRepository,
 	}
 	application := &Application{
-		Repositories:         repositories,
+		UserRepository:       userDBRepository,
 		ChangePassword:       changePasswordHandler,
 		LoginWithEmail:       loginWithEmailHandler,
 		Logout:               logoutHandler,
@@ -88,6 +85,6 @@ var (
 
 	applicationProvider = wire.NewSet(
 		repositoriesSet,
-		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewSessionTokenHandler), "*"), wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Repositories), "*"), wire.Struct(new(Application), "*"),
+		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewSessionTokenHandler), "*"), wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Application), "*"),
 	)
 )

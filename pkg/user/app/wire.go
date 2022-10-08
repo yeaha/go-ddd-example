@@ -45,7 +45,6 @@ var (
 		wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"),
 		wire.Struct(new(handler.VerifyOauthHandler), "*"),
 
-		wire.Struct(new(Repositories), "*"),
 		wire.Struct(new(Application), "*"),
 	)
 )
