@@ -49,9 +49,7 @@ func (c *userController) Authorize(next http.Handler) http.Handler {
 				}
 			} else if !errors.Is(err, domain.ErrSessionTokenExpired) {
 				// 只记录错误，不中断请求
-				if !errors.Is(err, domain.ErrSessionTokenExpired) {
-					logrus.WithError(err).Error("authorize visitor")
-				}
+				logrus.WithError(err).Error("authorize visitor")
 			}
 		}
 
