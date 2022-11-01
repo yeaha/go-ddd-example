@@ -14,7 +14,7 @@ func TestSessionTokenService(t *testing.T) {
 		ID:          uuid.NewV4(),
 		SessionSalt: "54381095jfepwoqrp2",
 	}
-	token := domain.NewSessionToken(user)
+	token := newSessionToken(user)
 
 	service := SessionTokenService{}
 	payload := service.encode(token, user.SessionSalt)

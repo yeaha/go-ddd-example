@@ -36,13 +36,12 @@ var (
 		repositoriesSet,
 		serviceSet,
 
+		wire.Struct(new(handler.AuthorizeHandler), "*"),
 		wire.Struct(new(handler.ChangePasswordHandler), "*"),
 		wire.Struct(new(handler.LoginWithEmailHandler), "*"),
 		wire.Struct(new(handler.LogoutHandler), "*"),
 		wire.Struct(new(handler.RegisterHandler), "*"),
 		wire.Struct(new(handler.RegisterWithOauthHandler), "*"),
-		wire.Struct(new(handler.RenewSessionTokenHandler), "*"),
-		wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"),
 		wire.Struct(new(handler.VerifyOauthHandler), "*"),
 
 		wire.Struct(new(Application), "*"),

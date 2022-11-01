@@ -40,20 +40,17 @@ func newUserController(opt *option.Options) *userController {
 func (c *userController) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if payload, ok := c.readSessionToken(r); ok {
-			user, token, err := c.App.RetrieveSessionToken.Handle(r.Context(), payload)
+			user, newPayload, err := c.App.Authorize.Handle(r.Context(), payload)
 			if err != nil {
 				// 只记录错误，不中断请求
-				logrus.WithError(err).Debug("retrieve session token")
-			} else if !token.IsExpired() {
+				if !errors.Is(err, domain.ErrSessionTokenExpired) {
+					logrus.WithError(err).Error("authorize visitor")
+				}
+			} else {
 				r = r.WithContext(context.WithValue(r.Context(), visitorKey, user))
 
-				if token.NeedRenew() {
-					payload, err = c.App.RenewSessionToken.Handle(r.Context(), user)
-					if err != nil {
-						logrus.WithError(err).Error("renew session token")
-					} else {
-						c.writeSessionToken(payload, w)
-					}
+				if newPayload != "" {
+					c.writeSessionToken(newPayload, w)
 				}
 			}
 		}

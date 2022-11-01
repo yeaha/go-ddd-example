@@ -11,14 +11,13 @@ import (
 type Application struct {
 	UserRepository adapter.UserRepository
 
-	ChangePassword       *handler.ChangePasswordHandler
-	LoginWithEmail       *handler.LoginWithEmailHandler
-	Logout               *handler.LogoutHandler
-	Register             *handler.RegisterHandler
-	RegisterWithOauth    *handler.RegisterWithOauthHandler
-	RenewSessionToken    *handler.RenewSessionTokenHandler
-	RetrieveSessionToken *handler.RetrieveSessionTokenHandler
-	VerifyOauth          *handler.VerifyOauthHandler
+	Authorize         *handler.AuthorizeHandler
+	ChangePassword    *handler.ChangePasswordHandler
+	LoginWithEmail    *handler.LoginWithEmailHandler
+	Logout            *handler.LogoutHandler
+	Register          *handler.RegisterHandler
+	RegisterWithOauth *handler.RegisterWithOauthHandler
+	VerifyOauth       *handler.VerifyOauthHandler
 }
 
 // NewApplication 构造函数

@@ -20,11 +20,14 @@ import (
 
 func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Application {
 	userDBRepository := infra.NewUserDBRepository(dbi)
-	changePasswordHandler := &handler.ChangePasswordHandler{
-		User: userDBRepository,
-	}
 	sessionTokenService := &service.SessionTokenService{
 		Users: userDBRepository,
+	}
+	authorizeHandler := &handler.AuthorizeHandler{
+		Session: sessionTokenService,
+	}
+	changePasswordHandler := &handler.ChangePasswordHandler{
+		User: userDBRepository,
 	}
 	userService := &service.UserService{
 		Users: userDBRepository,
@@ -48,12 +51,6 @@ func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Applicat
 		Session:    sessionTokenService,
 		OauthToken: oauthTokenService,
 	}
-	renewSessionTokenHandler := &handler.RenewSessionTokenHandler{
-		Session: sessionTokenService,
-	}
-	retrieveSessionTokenHandler := &handler.RetrieveSessionTokenHandler{
-		Session: sessionTokenService,
-	}
 	oauthDBRepository := infra.NewOauthDBRepository(dbi)
 	verifyOauthHandler := &handler.VerifyOauthHandler{
 		OauthToken: oauthTokenService,
@@ -62,15 +59,14 @@ func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Applicat
 		Users:      userDBRepository,
 	}
 	application := &Application{
-		UserRepository:       userDBRepository,
-		ChangePassword:       changePasswordHandler,
-		LoginWithEmail:       loginWithEmailHandler,
-		Logout:               logoutHandler,
-		Register:             registerHandler,
-		RegisterWithOauth:    registerWithOauthHandler,
-		RenewSessionToken:    renewSessionTokenHandler,
-		RetrieveSessionToken: retrieveSessionTokenHandler,
-		VerifyOauth:          verifyOauthHandler,
+		UserRepository:    userDBRepository,
+		Authorize:         authorizeHandler,
+		ChangePassword:    changePasswordHandler,
+		LoginWithEmail:    loginWithEmailHandler,
+		Logout:            logoutHandler,
+		Register:          registerHandler,
+		RegisterWithOauth: registerWithOauthHandler,
+		VerifyOauth:       verifyOauthHandler,
 	}
 	return application
 }
@@ -85,6 +81,6 @@ var (
 
 	applicationProvider = wire.NewSet(
 		repositoriesSet,
-		serviceSet, wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.RenewSessionTokenHandler), "*"), wire.Struct(new(handler.RetrieveSessionTokenHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Application), "*"),
+		serviceSet, wire.Struct(new(handler.AuthorizeHandler), "*"), wire.Struct(new(handler.ChangePasswordHandler), "*"), wire.Struct(new(handler.LoginWithEmailHandler), "*"), wire.Struct(new(handler.LogoutHandler), "*"), wire.Struct(new(handler.RegisterHandler), "*"), wire.Struct(new(handler.RegisterWithOauthHandler), "*"), wire.Struct(new(handler.VerifyOauthHandler), "*"), wire.Struct(new(Application), "*"),
 	)
 )
