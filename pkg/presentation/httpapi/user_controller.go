@@ -41,16 +41,16 @@ func (c *userController) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if payload, ok := c.readSessionToken(r); ok {
 			user, newPayload, err := c.App.Authorize.Handle(r.Context(), payload)
-			if err != nil {
-				// 只记录错误，不中断请求
-				if !errors.Is(err, domain.ErrSessionTokenExpired) {
-					logrus.WithError(err).Error("authorize visitor")
-				}
-			} else {
+			if err == nil {
 				r = r.WithContext(context.WithValue(r.Context(), visitorKey, user))
 
 				if newPayload != "" {
 					c.writeSessionToken(newPayload, w)
+				}
+			} else if !errors.Is(err, domain.ErrSessionTokenExpired) {
+				// 只记录错误，不中断请求
+				if !errors.Is(err, domain.ErrSessionTokenExpired) {
+					logrus.WithError(err).Error("authorize visitor")
 				}
 			}
 		}

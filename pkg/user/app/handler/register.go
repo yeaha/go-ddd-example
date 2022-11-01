@@ -34,6 +34,7 @@ func (h *RegisterHandler) Handle(ctx context.Context, args Register) (user *doma
 	token, err = h.Session.Generate(ctx, user)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
+		return
 	}
 
 	domain.PublishEvent(domain.EventLogin{
