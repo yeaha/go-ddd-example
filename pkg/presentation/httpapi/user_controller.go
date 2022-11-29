@@ -70,6 +70,7 @@ func (c *userController) writeSessionToken(token string, w http.ResponseWriter) 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "VISITOR",
 		Value:    payload,
+		Path:     "/",
 		Expires:  time.Now().Add(3 * 31 * 24 * time.Hour),
 		HttpOnly: true,
 	})
