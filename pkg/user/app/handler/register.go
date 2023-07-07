@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"ddd-example/pkg/user/app/event"
 	"ddd-example/pkg/user/app/service"
 	"ddd-example/pkg/user/domain"
 )
@@ -27,7 +28,7 @@ func (h *RegisterHandler) Handle(ctx context.Context, args Register) (user *doma
 		return
 	}
 
-	domain.PublishEvent(domain.EventRegister{
+	event.Publish(event.Register{
 		User: user,
 	})
 
@@ -37,7 +38,7 @@ func (h *RegisterHandler) Handle(ctx context.Context, args Register) (user *doma
 		return
 	}
 
-	domain.PublishEvent(domain.EventLogin{
+	event.Publish(event.Login{
 		User: user,
 	})
 	return

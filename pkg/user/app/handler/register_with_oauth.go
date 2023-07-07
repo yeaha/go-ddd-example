@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"ddd-example/pkg/user/app/adapter"
+	"ddd-example/pkg/user/app/event"
 	"ddd-example/pkg/user/app/service"
 	"ddd-example/pkg/user/domain"
 	"ddd-example/pkg/user/infra"
@@ -49,13 +50,13 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 		return
 	}
 
-	domain.PublishEvents(events...)
+	event.Publish(events...)
 
 	sessionToken, err = h.Session.Generate(ctx, user)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
 	}
-	domain.PublishEvent(domain.EventLogin{
+	event.Publish(event.Login{
 		User: user,
 	})
 	return
@@ -74,7 +75,7 @@ func (h *RegisterWithOauthHandler) handle(
 		user, err = userService.Create(ctx, args.Email, uuid.NewV4().String())
 
 		if err == nil {
-			events = append(events, domain.EventRegister{
+			events = append(events, event.Register{
 				User: user,
 			})
 		}
