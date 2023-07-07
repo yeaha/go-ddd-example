@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 // recoverer 捕获接口层抛出的错误
-func recoverer(logger logrus.FieldLogger) func(http.Handler) http.Handler {
+func recoverer(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
@@ -17,17 +17,17 @@ func recoverer(logger logrus.FieldLogger) func(http.Handler) http.Handler {
 					switch v := v.(type) {
 					case apiError:
 						if causeErr := errors.Unwrap(v); causeErr != nil {
-							entry := logger.WithError(causeErr)
+							entry := logger.With()
 							if f, ok := v.WrapLine(); ok {
-								entry = entry.WithFields(logrus.Fields{
-									logrus.FieldKeyFile: fmt.Sprintf("%s:%d", f.File, f.Line),
-									logrus.FieldKeyFunc: f.Function,
-								})
+								entry = entry.With(
+									"file", fmt.Sprintf("%s:%d", f.File, f.Line),
+									"func", f.Function,
+								)
 							} else {
-								entry = entry.WithFields(logrus.Fields{
-									"method": r.Method,
-									"uri":    r.URL.Path,
-								})
+								entry = entry.With(
+									"method", r.Method,
+									"uri", r.URL.Path,
+								)
 							}
 
 							if code := v.StatusCode(); code >= http.StatusInternalServerError {
@@ -39,12 +39,11 @@ func recoverer(logger logrus.FieldLogger) func(http.Handler) http.Handler {
 
 						sendResponse(w, withError(v))
 					default:
-						logrus.WithField("error", v).
-							WithFields(logrus.Fields{
-								"method": r.Method,
-								"url":    r.URL.Path,
-							}).
-							Error("recover panic")
+						logger.Error("recover panic",
+							"method", r.Method,
+							"uri", r.URL.Path,
+							"error", v,
+						)
 
 						sendResponse(w, withError(errUnexpectedException))
 					}

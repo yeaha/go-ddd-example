@@ -5,9 +5,9 @@ import (
 
 	"ddd-example/pkg/user/app"
 	"ddd-example/pkg/user/app/event"
+	"ddd-example/pkg/utils/logger"
 
 	"github.com/reactivex/rxgo/v2"
-	"github.com/sirupsen/logrus"
 )
 
 // 在用户注册成功之后发送邮件
@@ -16,7 +16,8 @@ type emailNotifier struct {
 }
 
 func (o *emailNotifier) Subscribe(ctx context.Context, events rxgo.Observable) rxgo.Disposed {
-	logger := logrus.WithField("scope", "observer.emailNotifier")
+
+	logger := logger.FromContext(ctx).With("scope", "observer.emailNotifier")
 	logger.Info("start")
 
 	return events.
@@ -29,10 +30,10 @@ func (o *emailNotifier) Subscribe(ctx context.Context, events rxgo.Observable) r
 				ev := item.(event.Register)
 
 				// 这里就不具体实现邮件发送，打条日志意思一下
-				logger.WithField("email", ev.User.Email).Info("send email to new user")
+				logger.Info("send email to new user", "email", ev.User.Email)
 			},
 			func(err error) {
-				logger.WithError(err).Error("handle event")
+				logger.Error("handle event", "error", err)
 			},
 			func() {
 				logger.Warn("complete")

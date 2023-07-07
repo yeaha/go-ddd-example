@@ -1,10 +1,10 @@
 package httpapi
 
 import (
+	"context"
+	"ddd-example/pkg/utils/logger"
 	"encoding/json"
 	"net/http"
-
-	"github.com/sirupsen/logrus"
 )
 
 type mapAny map[string]any
@@ -67,6 +67,6 @@ func sendResponse(w http.ResponseWriter, options ...apiResponseOption) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		logrus.WithError(err).Error("send response")
+		logger.FromContext(context.Background()).Error("send response", "error", err)
 	}
 }

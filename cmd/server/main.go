@@ -13,10 +13,11 @@ import (
 	"ddd-example/pkg/presentation/httpapi"
 	"ddd-example/pkg/presentation/observer"
 	"ddd-example/pkg/utils/database"
+	"ddd-example/pkg/utils/logger"
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
-	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 
 	// database driver
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -43,13 +44,13 @@ func init() {
 	initLogger(opt)
 
 	if opt.ConfigFile == "" {
-		logrus.Fatal("need config file")
+		logger.ErrorAndExist(context.Background(), "need config file")
 	} else if err := opt.LoadFile(opt.ConfigFile); err != nil {
-		logrus.WithError(err).Fatal("load config file")
+		logger.ErrorAndExist(context.Background(), "load config file", "error", err)
 	} else if err := opt.Prepare(); err != nil {
-		logrus.WithError(err).Fatal("prepare resources")
+		logger.ErrorAndExist(context.Background(), "prepare resources", "error", err)
 	} else if err := database.Migrate(migrateFiles, "migrate", opt.Database.DSN); err != nil {
-		logrus.WithError(err).Fatal("database migrate")
+		logger.ErrorAndExist(context.Background(), "database migrate", "error", err)
 	}
 
 	// 实体对象，默认使用本地内存缓存
@@ -57,18 +58,23 @@ func init() {
 }
 
 func initLogger(opt *option.Options) {
-	logrus.SetReportCaller(true)
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		PrettyPrint: opt.LogPretty,
-	})
-
-	if v := opt.LogLevel; v != "" {
-		if lvl, err := logrus.ParseLevel(v); err != nil {
-			logrus.WithError(err).Fatal("parse logLevel")
-		} else {
-			logrus.SetLevel(lvl)
-		}
+	levels := map[string]slog.Level{
+		"debug": slog.LevelDebug,
+		"info":  slog.LevelInfo,
+		"warn":  slog.LevelWarn,
+		"error": slog.LevelError,
 	}
+
+	level := slog.LevelInfo
+	if v, ok := levels[opt.LogLevel]; ok {
+		level = v
+	}
+
+	slog.SetDefault(slog.New(
+		slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: level,
+		}),
+	))
 }
 
 func main() {
@@ -85,15 +91,15 @@ func main() {
 
 	select {
 	case s := <-sc:
-		logrus.WithField("signal", s).Debug("receive signal")
+		slog.Debug("receive signal", "signal", s)
 
 		wg := &sync.WaitGroup{}
 
 		wg.Add(1)
 		if err := server.Close(wg); err != nil {
-			logrus.WithError(err).Error("shutdown server")
+			slog.Error("shutdown server", "error", err)
 		} else {
-			logrus.Info("shutdown server")
+			slog.Info("shutdown server")
 		}
 
 		wg.Add(1)

@@ -1,11 +1,12 @@
 package event
 
 import (
+	"context"
 	"ddd-example/pkg/utils/events"
 	"reflect"
 
 	"github.com/reactivex/rxgo/v2"
-	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 var (
@@ -17,18 +18,19 @@ var (
 
 // publish 发布领域事件
 func publish(event any) {
-	if logrus.StandardLogger().Level == logrus.TraceLevel {
-		logrus.WithFields(logrus.Fields{
-			"type": reflect.TypeOf(event).Name(),
-			"data": event,
-		}).Trace("deliver domain event")
+	if slog.Default().Enabled(context.Background(), slog.LevelDebug) {
+		slog.Debug("deliver domain event",
+			"type", reflect.TypeOf(event).Name(),
+			"data", event,
+		)
 	}
 
 	if err := stream.Publish(event); err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"type": reflect.TypeOf(event).Name(),
-			"data": event,
-		}).Error("deliver domain event")
+		slog.Error("deliver domain event",
+			"type", reflect.TypeOf(event).Name(),
+			"data", event,
+			"error", err,
+		)
 	}
 }
 

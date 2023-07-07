@@ -12,9 +12,9 @@ import (
 	"ddd-example/pkg/user/app"
 	"ddd-example/pkg/user/app/handler"
 	"ddd-example/pkg/user/domain"
+	"ddd-example/pkg/utils/logger"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -49,7 +49,7 @@ func (c *userController) Authorize(next http.Handler) http.Handler {
 				}
 			} else if !errors.Is(err, domain.ErrSessionTokenExpired) {
 				// 只记录错误，不中断请求
-				logrus.WithError(err).Error("authorize visitor")
+				logger.FromContext(r.Context()).Error("authorize visitor", "error", err)
 			}
 		}
 
@@ -80,7 +80,7 @@ func (c *userController) readSessionToken(r *http.Request) (string, bool) {
 	if cookie, err := r.Cookie("VISITOR"); err == nil {
 		data, err := base64.RawURLEncoding.DecodeString(cookie.Value)
 		if err != nil {
-			logrus.WithError(err).Debug("base64 decode session token")
+			logger.FromContext(r.Context()).Error("base64 decode session token", "error", err)
 			return "", false
 		}
 

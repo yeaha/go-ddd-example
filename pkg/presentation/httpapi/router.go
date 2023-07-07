@@ -4,13 +4,13 @@ import (
 	"ddd-example/pkg/option"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 func newRouter(opt *option.Options) chi.Router {
 	router := chi.NewRouter()
 
-	router.Use(recoverer(logrus.StandardLogger()))
+	router.Use(recoverer(slog.Default()))
 
 	uc := newUserController(opt)
 	router.Use(uc.Authorize)

@@ -9,7 +9,7 @@ import (
 
 	"ddd-example/pkg/option"
 
-	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 // Server http服务
@@ -29,9 +29,9 @@ func NewServer(opt *option.Options) *Server {
 	}
 
 	go func() {
-		logrus.WithField("listen", s.server.Addr).Info("start server")
+		slog.Info("start server", "listen", s.server.Addr)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logrus.WithError(err).Fatal("start server")
+			slog.Error("start server", "error", err)
 		}
 	}()
 
