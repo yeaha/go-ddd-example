@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"flag"
 	"os"
 	"os/signal"
@@ -12,7 +11,6 @@ import (
 	"ddd-example/pkg/option"
 	"ddd-example/pkg/presentation/httpapi"
 	"ddd-example/pkg/presentation/observer"
-	"ddd-example/pkg/utils/database"
 	"ddd-example/pkg/utils/logger"
 
 	"github.com/joyparty/entity"
@@ -20,19 +18,12 @@ import (
 	"golang.org/x/exp/slog"
 
 	// database driver
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/jackc/pgx/v4/stdlib"
-
-	// sql dialect
-	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 )
 
 var (
 	// 系统配置
 	opt = &option.Options{}
-
-	//go:embed migrate/*
-	migrateFiles embed.FS
 )
 
 func init() {
@@ -49,8 +40,6 @@ func init() {
 		logger.ErrorAndExist(context.Background(), "load config file", "error", err)
 	} else if err := opt.Prepare(); err != nil {
 		logger.ErrorAndExist(context.Background(), "prepare resources", "error", err)
-	} else if err := database.Migrate(migrateFiles, "migrate", opt.Database.DSN); err != nil {
-		logger.ErrorAndExist(context.Background(), "database migrate", "error", err)
 	}
 
 	// 实体对象，默认使用本地内存缓存

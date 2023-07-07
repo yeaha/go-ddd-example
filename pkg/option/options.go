@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"ddd-example/pkg/migrate"
 	"ddd-example/pkg/utils/database"
 	"ddd-example/pkg/utils/oauth"
 
@@ -53,6 +54,10 @@ func (opt *Options) LoadFile(file string) error {
 
 // Prepare 初始化资源
 func (opt *Options) Prepare() error {
+	if err := migrate.Execute(migrate.FS, "scripts", opt.Database.DSN); err != nil {
+		return fmt.Errorf("database migrate, %w", err)
+	}
+
 	db, err := database.NewDB(opt.Database)
 	if err != nil {
 		return fmt.Errorf("connect database, %w", err)

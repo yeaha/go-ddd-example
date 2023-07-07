@@ -1,6 +1,7 @@
-package database
+package migrate
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -9,10 +10,18 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+
+	// database driver
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 )
 
-// Migrate 执行数据库升级
-func Migrate(dir fs.FS, path string, dsn string) error {
+// FS 数据库迁移文件
+//
+//go:embed scripts/*
+var FS embed.FS
+
+// Execute 执行数据库升级
+func Execute(dir fs.FS, path string, dsn string) error {
 	drv, err := iofs.New(dir, path)
 	if err != nil {
 		return fmt.Errorf("read dir, %w", err)
