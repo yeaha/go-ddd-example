@@ -12,7 +12,7 @@ POST {{baseURL}}/register
 }
 
 ### 登录
-POST {{baseURL}}/login
+POST {{baseURL}}/session
 
 {
 	"email": "test@example.com",
@@ -20,10 +20,10 @@ POST {{baseURL}}/login
 }
 
 ### 退出
-DELETE {{baseURL}}/login
+DELETE {{baseURL}}/session
 
 ### 当前登录账号信息
-GET {{baseURL}}/my/identity
+GET {{baseURL}}/session
 
 ### 修改密码
 PUT {{baseURL}}/my/password
