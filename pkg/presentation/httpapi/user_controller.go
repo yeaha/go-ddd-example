@@ -80,6 +80,7 @@ func (c *userController) readSessionToken(r *http.Request) (string, bool) {
 	if cookie, err := r.Cookie("VISITOR"); err == nil {
 		data, err := base64.RawURLEncoding.DecodeString(cookie.Value)
 		if err != nil {
+			// 出错了不中断请求，打印错误日志，作为匿名访问处理
 			logger.FromContext(r.Context()).Error("base64 decode session token", "error", err)
 			return "", false
 		}
