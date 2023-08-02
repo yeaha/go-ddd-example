@@ -8,10 +8,10 @@ import (
 	"sync"
 	"syscall"
 
-	"ddd-example/pkg/option"
-	"ddd-example/pkg/presentation/httpapi"
-	"ddd-example/pkg/presentation/observer"
-	"ddd-example/pkg/utils/logger"
+	"ddd-example/internal/option"
+	"ddd-example/internal/presentation/httpapi"
+	"ddd-example/internal/presentation/observer"
+	"ddd-example/pkg/logger"
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
