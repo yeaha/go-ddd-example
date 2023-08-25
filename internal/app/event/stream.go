@@ -3,10 +3,10 @@ package event
 import (
 	"context"
 	"ddd-example/pkg/events"
+	"ddd-example/pkg/logger"
 	"reflect"
 
 	"github.com/reactivex/rxgo/v2"
-	"golang.org/x/exp/slog"
 )
 
 var (
@@ -18,15 +18,13 @@ var (
 
 // publish 发布领域事件
 func publish(event any) {
-	if slog.Default().Enabled(context.Background(), slog.LevelDebug) {
-		slog.Debug("deliver domain event",
-			"type", reflect.TypeOf(event).Name(),
-			"data", event,
-		)
-	}
+	logger.Debug(context.Background(), "deliver domain event",
+		"type", reflect.TypeOf(event).Name(),
+		"data", event,
+	)
 
 	if err := stream.Publish(event); err != nil {
-		slog.Error("deliver domain event",
+		logger.Error(context.Background(), "deliver domain event",
 			"type", reflect.TypeOf(event).Name(),
 			"data", event,
 			"error", err,

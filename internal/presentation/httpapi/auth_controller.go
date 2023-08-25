@@ -49,7 +49,7 @@ func (c *authController) Authorize(next http.Handler) http.Handler {
 				}
 			} else if !errors.Is(err, domain.ErrSessionTokenExpired) {
 				// 只记录错误，不中断请求
-				logger.FromContext(r.Context()).Error("authorize visitor", "error", err)
+				logger.Error(r.Context(), "authorize visitor", "error", err)
 			}
 		}
 
@@ -81,7 +81,7 @@ func (c *authController) readSessionToken(r *http.Request) (string, bool) {
 		data, err := base64.RawURLEncoding.DecodeString(cookie.Value)
 		if err != nil {
 			// 出错了不中断请求，打印错误日志，作为匿名访问处理
-			logger.FromContext(r.Context()).Error("base64 decode session token", "error", err)
+			logger.Error(r.Context(), "base64 decode session token", "error", err)
 			return "", false
 		}
 

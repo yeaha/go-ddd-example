@@ -2,9 +2,9 @@ package httpapi
 
 import (
 	"ddd-example/internal/option"
+	"log/slog"
 
 	"github.com/go-chi/chi/v5"
-	"golang.org/x/exp/slog"
 )
 
 func newRouter(opt *option.Options) chi.Router {

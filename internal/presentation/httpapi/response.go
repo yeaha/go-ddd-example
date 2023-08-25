@@ -67,6 +67,6 @@ func sendResponse(w http.ResponseWriter, options ...apiResponseOption) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		logger.FromContext(context.Background()).Error("send response", "error", err)
+		logger.Error(context.Background(), "send response", "error", err)
 	}
 }

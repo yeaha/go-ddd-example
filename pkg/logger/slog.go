@@ -2,9 +2,7 @@ package logger
 
 import (
 	"context"
-	"os"
-
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type loggerKey struct{}
@@ -22,17 +20,26 @@ func FromContext(ctx context.Context) *slog.Logger {
 	return slog.Default()
 }
 
-// LogAndExist 日志并退出
-func LogAndExist(ctx context.Context, msg string, args ...any) {
-	logAndExist(ctx, slog.LevelInfo, msg, args...)
-}
-
-// ErrorAndExist 记录错误并退出
-func ErrorAndExist(ctx context.Context, msg string, args ...any) {
-	logAndExist(ctx, slog.LevelError, msg, args...)
-}
-
-func logAndExist(ctx context.Context, level slog.Level, msg string, args ...any) {
+func log(ctx context.Context, level slog.Level, msg string, args ...any) {
 	FromContext(ctx).Log(ctx, level, msg, args...)
-	os.Exit(1) // revive:disable-line
+}
+
+// Debug debug级别日志
+func Debug(ctx context.Context, msg string, args ...any) {
+	log(ctx, slog.LevelDebug, msg, args...)
+}
+
+// Info info级别日志
+func Info(ctx context.Context, msg string, args ...any) {
+	log(ctx, slog.LevelInfo, msg, args...)
+}
+
+// Warn warn级别日志
+func Warn(ctx context.Context, msg string, args ...any) {
+	log(ctx, slog.LevelWarn, msg, args...)
+}
+
+// Error error级别日志
+func Error(ctx context.Context, msg string, args ...any) {
+	log(ctx, slog.LevelError, msg, args...)
 }

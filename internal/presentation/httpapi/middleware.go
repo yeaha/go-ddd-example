@@ -3,9 +3,8 @@ package httpapi
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-
-	"golang.org/x/exp/slog"
 )
 
 // recoverer 捕获接口层抛出的错误

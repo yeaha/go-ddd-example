@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"ddd-example/internal/option"
-
-	"golang.org/x/exp/slog"
+	"ddd-example/pkg/logger"
 )
 
 // Server http服务
@@ -29,9 +28,9 @@ func NewServer(opt *option.Options) *Server {
 	}
 
 	go func() {
-		slog.Info("start server", "listen", s.server.Addr)
+		logger.Info(context.Background(), "start server", "listen", s.server.Addr)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("start server", "error", err)
+			logger.Error(context.Background(), "start server", "error", err)
 		}
 	}()
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
-	"golang.org/x/exp/slog"
 
 	// database driver
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -35,11 +35,11 @@ func init() {
 	initLogger(opt)
 
 	if opt.ConfigFile == "" {
-		logger.ErrorAndExist(context.Background(), "need config file")
+		logAndExist(context.Background(), "need config file")
 	} else if err := opt.LoadFile(opt.ConfigFile); err != nil {
-		logger.ErrorAndExist(context.Background(), "load config file", "error", err)
+		logAndExist(context.Background(), "load config file", "error", err)
 	} else if err := opt.Prepare(); err != nil {
-		logger.ErrorAndExist(context.Background(), "prepare resources", "error", err)
+		logAndExist(context.Background(), "prepare resources", "error", err)
 	}
 
 	// 实体对象，默认使用本地内存缓存
@@ -80,15 +80,15 @@ func main() {
 
 	select {
 	case s := <-sc:
-		slog.Debug("receive signal", "signal", s)
+		logger.Debug(ctx, "receive signal", "signal", s)
 
 		wg := &sync.WaitGroup{}
 
 		wg.Add(1)
 		if err := server.Close(wg); err != nil {
-			slog.Error("shutdown server", "error", err)
+			logger.Error(ctx, "shutdown server", "error", err)
 		} else {
-			slog.Info("shutdown server")
+			logger.Info(ctx, "shutdown server")
 		}
 
 		wg.Add(1)
@@ -97,4 +97,9 @@ func main() {
 		wg.Wait()
 		os.Exit(0)
 	}
+}
+
+func logAndExist(ctx context.Context, msg string, args ...any) {
+	logger.Error(ctx, msg, args...)
+	os.Exit(1) // revive:disable-line
 }
