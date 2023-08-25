@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/app/service"
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/app/service"
+	"ddd-example/internal/domain"
 	"ddd-example/pkg/oauth"
 )
 

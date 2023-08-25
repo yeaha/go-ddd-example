@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/domain"
-	"ddd-example/internal/user/infra"
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/domain"
+	"ddd-example/internal/infra"
 
 	"github.com/jmoiron/sqlx"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/domain"
 )
 
 // ChangePassword 替换密码，参数

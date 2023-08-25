@@ -3,7 +3,7 @@ package adapter
 import (
 	"context"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 
 	uuid "github.com/satori/go.uuid"
 )

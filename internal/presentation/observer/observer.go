@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
+	userApp "ddd-example/internal/app"
+	"ddd-example/internal/app/event"
 	"ddd-example/internal/option"
-	userApp "ddd-example/internal/user/app"
-	"ddd-example/internal/user/app/event"
 )
 
 // Start 启动领域事件观察者

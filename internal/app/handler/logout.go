@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 
-	"ddd-example/internal/user/app/service"
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/app/service"
+	"ddd-example/internal/domain"
 )
 
 // LogoutHandler 退出登录

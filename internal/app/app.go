@@ -1,10 +1,10 @@
 package app
 
 import (
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/app/handler"
+	"ddd-example/internal/infra"
 	"ddd-example/internal/option"
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/app/handler"
-	"ddd-example/internal/user/infra"
 )
 
 // Application 账号模块业务逻辑

@@ -3,8 +3,8 @@ package observer
 import (
 	"context"
 
-	"ddd-example/internal/user/app"
-	"ddd-example/internal/user/app/event"
+	"ddd-example/internal/app"
+	"ddd-example/internal/app/event"
 	"ddd-example/pkg/logger"
 
 	"github.com/reactivex/rxgo/v2"

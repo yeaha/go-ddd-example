@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/app/event"
-	"ddd-example/internal/user/app/service"
-	"ddd-example/internal/user/domain"
-	"ddd-example/internal/user/infra"
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/app/event"
+	"ddd-example/internal/app/service"
+	"ddd-example/internal/domain"
+	"ddd-example/internal/infra"
 	"ddd-example/pkg/oauth"
 
 	"github.com/jmoiron/sqlx"

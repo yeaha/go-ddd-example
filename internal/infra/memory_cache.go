@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 
 	"github.com/pmylund/go-cache"
 )

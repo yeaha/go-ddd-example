@@ -4,10 +4,10 @@
 package app
 
 import (
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/app/handler"
-	"ddd-example/internal/user/app/service"
-	"ddd-example/internal/user/infra"
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/app/handler"
+	"ddd-example/internal/app/service"
+	"ddd-example/internal/infra"
 
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"

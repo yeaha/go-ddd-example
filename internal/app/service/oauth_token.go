@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"ddd-example/internal/user/app/adapter"
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/app/adapter"
+	"ddd-example/internal/domain"
 	"ddd-example/pkg/oauth"
 
 	uuid "github.com/satori/go.uuid"

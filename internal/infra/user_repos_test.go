@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
 	"github.com/jmoiron/sqlx"

@@ -37,27 +37,21 @@ VSCode可以使用[test/api.http](./test/api.http)测试脚本对本地启动好
 
 表现层，http、grpc、定时任务、队列consumer等
 
-### [/internal/user](./internal/user/)
-
-业务模块，所有的业务模块内部都按照Clean Architecture / DDD的方式组织代码
-
-每个业务模块可以想象为代码级别的微服务
-
-#### [/internal/user/app](./internal/user/app/)
+#### [/internal/app](./internal/app/)
 
 业务逻辑层
 
-表现层所有的请求都由user/app/handler内封装的各种handler来处理
+表现层所有的请求都由app/handler内封装的各种handler来处理
 
-多个handler之间共用的逻辑被封装为相应的user/app/service，service只应该被handler调用，不应该被直接使用
+多个handler之间共用的逻辑被封装为相应的app/service，service只应该被handler调用，不应该被直接使用
 
-#### [/internal/user/domain](./internal/user/domain/)
+#### [/internal/domain](./internal/domain/)
 
 领域逻辑
 
-#### [/internal/user/infra](./internal/user/infra/)
+#### [/internal/infra](./internal/infra/)
 
-基础设施，实现/user/app/adapter内约定的接口行为
+基础设施，实现/app/adapter内约定的接口行为
 
 ### [/pkg/](./pkg/)
 

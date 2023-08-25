@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/joyparty/entity"

@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"time"
 
+	"ddd-example/internal/app"
+	"ddd-example/internal/app/handler"
+	"ddd-example/internal/domain"
 	"ddd-example/internal/option"
-	"ddd-example/internal/user/app"
-	"ddd-example/internal/user/app/handler"
-	"ddd-example/internal/user/domain"
 	"ddd-example/pkg/logger"
 
 	"github.com/go-chi/chi/v5"

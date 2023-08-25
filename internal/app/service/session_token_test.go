@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"

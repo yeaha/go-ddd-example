@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 
 	"github.com/jmoiron/sqlx"
 	uuid "github.com/satori/go.uuid"

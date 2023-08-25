@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
 	"github.com/jackc/pgtype"

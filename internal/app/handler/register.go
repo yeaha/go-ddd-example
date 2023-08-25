@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"ddd-example/internal/user/app/event"
-	"ddd-example/internal/user/app/service"
-	"ddd-example/internal/user/domain"
+	"ddd-example/internal/app/event"
+	"ddd-example/internal/app/service"
+	"ddd-example/internal/domain"
 )
 
 // Register 账号注册，参数

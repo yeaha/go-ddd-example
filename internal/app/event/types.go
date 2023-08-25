@@ -1,6 +1,6 @@
 package event
 
-import "ddd-example/internal/user/domain"
+import "ddd-example/internal/domain"
 
 // Login 账号登录
 type Login struct {
