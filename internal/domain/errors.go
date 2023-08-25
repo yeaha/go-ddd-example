@@ -3,8 +3,8 @@ package domain
 import "errors"
 
 var (
-	// ErrUserNotFound 用户不存在
-	ErrUserNotFound = errors.New("user not found")
+	// ErrAccountNotFound 账号不存在
+	ErrAccountNotFound = errors.New("account not found")
 	// ErrWrongPassword 密码错误
 	ErrWrongPassword = errors.New("wrong password")
 	// ErrEmailRegistered email已注册

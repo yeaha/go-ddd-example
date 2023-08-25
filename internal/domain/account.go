@@ -11,8 +11,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// User 系统用户
-type User struct {
+// Account 系统账号
+type Account struct {
 	ID           uuid.UUID `json:"id"`
 	Email        string    `json:"email"`
 	Password     string    `json:"-"`
@@ -21,53 +21,53 @@ type User struct {
 }
 
 // SetPassword 设置密码
-func (u *User) SetPassword(password string) error {
+func (a *Account) SetPassword(password string) error {
 	password = strings.TrimSpace(password)
 	if password == "" {
 		return errors.New("empty password")
 	}
 
-	if err := u.refreshPasswordSalt(); err != nil {
+	if err := a.refreshPasswordSalt(); err != nil {
 		return fmt.Errorf("refresh password salt, %w", err)
 	}
 
-	u.Password = newPassword(password, u.PasswordSalt)
+	a.Password = newPassword(password, a.PasswordSalt)
 	return nil
 }
 
 // SetEmail 设置email
-func (u *User) SetEmail(email string) error {
+func (a *Account) SetEmail(email string) error {
 	email = NormalizeEmail(email)
 	if !govalidator.IsEmail(email) {
 		return errors.New("invalid email")
 	}
 
-	u.Email = email
+	a.Email = email
 	return nil
 }
 
 // ComparePassword 验证密码是否一致
-func (u *User) ComparePassword(password string) bool {
+func (a *Account) ComparePassword(password string) bool {
 	return password != "" &&
-		u.Password == newPassword(password, u.PasswordSalt)
+		a.Password == newPassword(password, a.PasswordSalt)
 }
 
 // RefreshSessionSalt 更新会话签名盐，更新后同一账号的其它会话会自动失效
-func (u *User) RefreshSessionSalt() error {
+func (a *Account) RefreshSessionSalt() error {
 	s, err := newSalt(8)
 	if err != nil {
 		return err
 	}
-	u.SessionSalt = s
+	a.SessionSalt = s
 	return nil
 }
 
-func (u *User) refreshPasswordSalt() error {
+func (a *Account) refreshPasswordSalt() error {
 	s, err := newSalt(8)
 	if err != nil {
 		return err
 	}
-	u.PasswordSalt = s
+	a.PasswordSalt = s
 	return nil
 }
 

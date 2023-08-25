@@ -17,29 +17,29 @@ type Register struct {
 
 // RegisterHandler 账号注册
 type RegisterHandler struct {
-	Session *service.SessionTokenService
-	Users   *service.UserService
+	Session  *service.SessionTokenService
+	Accounts *service.AccountService
 }
 
 // Handle 执行账号注册
-func (h *RegisterHandler) Handle(ctx context.Context, args Register) (user *domain.User, token string, err error) {
-	user, err = h.Users.Create(ctx, args.Email, args.Password)
+func (h *RegisterHandler) Handle(ctx context.Context, args Register) (account *domain.Account, token string, err error) {
+	account, err = h.Accounts.Create(ctx, args.Email, args.Password)
 	if err != nil {
 		return
 	}
 
 	event.Publish(event.Register{
-		User: user,
+		Account: account,
 	})
 
-	token, err = h.Session.Generate(ctx, user)
+	token, err = h.Session.Generate(ctx, account)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
 		return
 	}
 
 	event.Publish(event.Login{
-		User: user,
+		Account: account,
 	})
 	return
 }

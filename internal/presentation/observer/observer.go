@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	userApp "ddd-example/internal/app"
+	"ddd-example/internal/app"
 	"ddd-example/internal/app/event"
 	"ddd-example/internal/option"
 )
@@ -12,7 +12,7 @@ import (
 // Start 启动领域事件观察者
 func Start(ctx context.Context, opt *option.Options) {
 	(&emailNotifier{
-		App: userApp.NewApplication(opt),
+		App: app.NewApplication(opt),
 	}).Subscribe(ctx, event.Stream)
 }
 

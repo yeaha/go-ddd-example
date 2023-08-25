@@ -23,26 +23,26 @@ var (
 
 type contextKey any
 
-// userController 账号相关接口
-type userController struct {
+// authController 账号相关接口
+type authController struct {
 	App *app.Application
 	opt *option.Options
 }
 
-func newUserController(opt *option.Options) *userController {
-	return &userController{
+func newAuthController(opt *option.Options) *authController {
+	return &authController{
 		App: app.NewApplication(opt),
 		opt: opt,
 	}
 }
 
 // Authorize 获取访问者账号中间件
-func (c *userController) Authorize(next http.Handler) http.Handler {
+func (c *authController) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if payload, ok := c.readSessionToken(r); ok {
-			user, newPayload, err := c.App.Authorize.Handle(r.Context(), payload)
+			account, newPayload, err := c.App.Authorize.Handle(r.Context(), payload)
 			if err == nil {
-				r = r.WithContext(context.WithValue(r.Context(), visitorKey, user))
+				r = r.WithContext(context.WithValue(r.Context(), visitorKey, account))
 
 				if newPayload != "" {
 					c.writeSessionToken(newPayload, w)
@@ -58,14 +58,14 @@ func (c *userController) Authorize(next http.Handler) http.Handler {
 }
 
 // DenyAnonymous 禁止匿名访问中间件
-func (c *userController) DenyAnonymous(next http.Handler) http.Handler {
+func (c *authController) DenyAnonymous(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = mustVisitorFromCtx(r.Context())
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (c *userController) writeSessionToken(token string, w http.ResponseWriter) {
+func (c *authController) writeSessionToken(token string, w http.ResponseWriter) {
 	payload := base64.RawURLEncoding.EncodeToString([]byte(token))
 	http.SetCookie(w, &http.Cookie{
 		Name:     "VISITOR",
@@ -76,7 +76,7 @@ func (c *userController) writeSessionToken(token string, w http.ResponseWriter) 
 	})
 }
 
-func (c *userController) readSessionToken(r *http.Request) (string, bool) {
+func (c *authController) readSessionToken(r *http.Request) (string, bool) {
 	if cookie, err := r.Cookie("VISITOR"); err == nil {
 		data, err := base64.RawURLEncoding.DecodeString(cookie.Value)
 		if err != nil {
@@ -91,14 +91,14 @@ func (c *userController) readSessionToken(r *http.Request) (string, bool) {
 }
 
 // LoginWithEmail email登录
-func (c *userController) LoginWithEmail() http.HandlerFunc {
+func (c *authController) LoginWithEmail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.LoginWithEmail{}
 		mustScanJSON(&req, r.Body)
 
 		_, token, err := c.App.LoginWithEmail.Handle(r.Context(), req)
 		if err != nil {
-			if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
+			if errors.Is(err, domain.ErrAccountNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 				panic(errUnauthorized)
 			}
 			panic(errUnexpectedException.WrapError(err))
@@ -110,10 +110,10 @@ func (c *userController) LoginWithEmail() http.HandlerFunc {
 }
 
 // Logout 退出登录
-func (c *userController) Logout() http.HandlerFunc {
+func (c *authController) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if user, ok := visitorFromCtx(r.Context()); ok {
-			if err := c.App.Logout.Handle(r.Context(), user); err != nil {
+		if account, ok := visitorFromCtx(r.Context()); ok {
+			if err := c.App.Logout.Handle(r.Context(), account); err != nil {
 				panic(errUnexpectedException.WrapError(err))
 			}
 		}
@@ -123,7 +123,7 @@ func (c *userController) Logout() http.HandlerFunc {
 }
 
 // Register 账号注册
-func (c *userController) Register() http.HandlerFunc {
+func (c *authController) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.Register{}
 		mustScanJSON(&req, r.Body)
@@ -142,10 +142,10 @@ func (c *userController) Register() http.HandlerFunc {
 }
 
 // ChangePassword 修改密码
-func (c *userController) ChangePassword() http.HandlerFunc {
+func (c *authController) ChangePassword() http.HandlerFunc {
 	return func(_ http.ResponseWriter, r *http.Request) {
 		req := handler.ChangePassword{
-			User: mustVisitorFromCtx(r.Context()),
+			Account: mustVisitorFromCtx(r.Context()),
 		}
 		mustScanJSON(&req, r.Body)
 
@@ -159,7 +159,7 @@ func (c *userController) ChangePassword() http.HandlerFunc {
 }
 
 // MyIdentity 当前访问者信息
-func (c *userController) MyIdentity() http.HandlerFunc {
+func (c *authController) MyIdentity() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		visitor := mustVisitorFromCtx(r.Context())
 
@@ -168,7 +168,7 @@ func (c *userController) MyIdentity() http.HandlerFunc {
 }
 
 // LoginWithOauth oauth三方登录，下发重定向地址
-func (c *userController) LoginWithOauth() http.HandlerFunc {
+func (c *authController) LoginWithOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		client, ok := c.opt.GetOauthClient(chi.URLParam(r, "site"))
 		if !ok {
@@ -189,7 +189,7 @@ func (c *userController) LoginWithOauth() http.HandlerFunc {
 // VerifyOauth 验证三方登录
 //
 // 前端在三方站点验证完毕重定向回来之后，把三方站点回传的query string提交给服务器端做验证
-func (c *userController) VerifyOauth() http.HandlerFunc {
+func (c *authController) VerifyOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		client, ok := c.opt.GetOauthClient(chi.URLParam(r, "site"))
 		if !ok {
@@ -212,12 +212,12 @@ func (c *userController) VerifyOauth() http.HandlerFunc {
 		result, err := c.App.VerifyOauth.Handle(r.Context(), req)
 		if err != nil {
 			panic(errUnexpectedException.WrapError(err))
-		} else if user := result.User; user != nil {
+		} else if account := result.Account; account != nil {
 			// 下发会话凭证及登录账号信息
 			c.writeSessionToken(result.SessionToken, w)
 
 			sendResponse(w, withData(mapAny{
-				"user": user,
+				"account": account,
 			}))
 			return
 		} else if token := result.OauthToken; token != "" {
@@ -234,16 +234,16 @@ func (c *userController) VerifyOauth() http.HandlerFunc {
 }
 
 // RegisterWithOauth 三方账号绑定或注册
-func (c *userController) RegisterWithOauth() http.HandlerFunc {
+func (c *authController) RegisterWithOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.RegisterWithOauth{}
 		mustScanJSON(&req, r.Body)
 
-		user, token, err := c.App.RegisterWithOauth.Handle(r.Context(), req)
+		account, token, err := c.App.RegisterWithOauth.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrInvalidOauthToken) {
 				panic(errInvalidOauthToken)
-			} else if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
+			} else if errors.Is(err, domain.ErrAccountNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 				panic(errUnauthorized)
 			} else if errors.Is(err, domain.ErrEmailRegistered) {
 				panic(errEmailRegistered)
@@ -254,20 +254,20 @@ func (c *userController) RegisterWithOauth() http.HandlerFunc {
 
 		c.writeSessionToken(token, w)
 		sendResponse(w, withData(mapAny{
-			"user": user,
+			"account": account,
 		}))
 	}
 }
 
-func visitorFromCtx(ctx context.Context) (*domain.User, bool) {
-	user, ok := ctx.Value(visitorKey).(*domain.User)
-	return user, ok
+func visitorFromCtx(ctx context.Context) (*domain.Account, bool) {
+	account, ok := ctx.Value(visitorKey).(*domain.Account)
+	return account, ok
 }
 
-func mustVisitorFromCtx(ctx context.Context) *domain.User {
-	user, ok := visitorFromCtx(ctx)
+func mustVisitorFromCtx(ctx context.Context) *domain.Account {
+	account, ok := visitorFromCtx(ctx)
 	if !ok {
 		panic(errUnauthorized)
 	}
-	return user
+	return account
 }

@@ -19,29 +19,29 @@ import (
 // Injectors from wire.go:
 
 func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Application {
-	userDBRepository := infra.NewUserDBRepository(dbi)
+	accountDBRepository := infra.NewAccountDBRepository(dbi)
 	sessionTokenService := &service.SessionTokenService{
-		Users: userDBRepository,
+		Accounts: accountDBRepository,
 	}
 	authorizeHandler := &handler.AuthorizeHandler{
 		Session: sessionTokenService,
 	}
 	changePasswordHandler := &handler.ChangePasswordHandler{
-		User: userDBRepository,
+		Accounts: accountDBRepository,
 	}
-	userService := &service.UserService{
-		Users: userDBRepository,
+	accountService := &service.AccountService{
+		Accounts: accountDBRepository,
 	}
 	loginWithEmailHandler := &handler.LoginWithEmailHandler{
-		Session: sessionTokenService,
-		Users:   userService,
+		Session:  sessionTokenService,
+		Accounts: accountService,
 	}
 	logoutHandler := &handler.LogoutHandler{
 		Session: sessionTokenService,
 	}
 	registerHandler := &handler.RegisterHandler{
-		Session: sessionTokenService,
-		Users:   userService,
+		Session:  sessionTokenService,
+		Accounts: accountService,
 	}
 	oauthTokenService := &service.OauthTokenService{
 		Cache: cache,
@@ -56,10 +56,10 @@ func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Applicat
 		OauthToken: oauthTokenService,
 		Session:    sessionTokenService,
 		Oauth:      oauthDBRepository,
-		Users:      userDBRepository,
+		Accounts:   accountDBRepository,
 	}
 	application := &Application{
-		UserRepository:    userDBRepository,
+		AccountRepository: accountDBRepository,
 		Authorize:         authorizeHandler,
 		ChangePassword:    changePasswordHandler,
 		LoginWithEmail:    loginWithEmailHandler,
@@ -74,10 +74,10 @@ func initApplication(db *sqlx.DB, dbi entity.DB, cache adapter.Cacher) *Applicat
 // wire.go:
 
 var (
-	repositoriesSet = wire.NewSet(wire.NewSet(infra.NewUserDBRepository, wire.Bind(new(adapter.UserRepository), new(*infra.UserDBRepository))), wire.NewSet(infra.NewOauthDBRepository, wire.Bind(new(adapter.OauthRepository), new(*infra.OauthDBRepository))),
+	repositoriesSet = wire.NewSet(wire.NewSet(infra.NewAccountDBRepository, wire.Bind(new(adapter.AccountRepository), new(*infra.AccountDBRepository))), wire.NewSet(infra.NewOauthDBRepository, wire.Bind(new(adapter.OauthRepository), new(*infra.OauthDBRepository))),
 	)
 
-	serviceSet = wire.NewSet(wire.Struct(new(service.OauthTokenService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.UserService), "*"))
+	serviceSet = wire.NewSet(wire.Struct(new(service.OauthTokenService), "*"), wire.Struct(new(service.SessionTokenService), "*"), wire.Struct(new(service.AccountService), "*"))
 
 	applicationProvider = wire.NewSet(
 		repositoriesSet,

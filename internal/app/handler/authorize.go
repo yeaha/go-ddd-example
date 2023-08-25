@@ -13,8 +13,8 @@ type AuthorizeHandler struct {
 }
 
 // Handle 执行
-func (h *AuthorizeHandler) Handle(ctx context.Context, payload string) (user *domain.User, newPayload string, err error) {
-	user, token, err := h.Session.Retrieve(ctx, payload)
+func (h *AuthorizeHandler) Handle(ctx context.Context, payload string) (account *domain.Account, newPayload string, err error) {
+	account, token, err := h.Session.Retrieve(ctx, payload)
 	if err != nil {
 		err = fmt.Errorf("retrieve session token, %w", err)
 		return
@@ -24,7 +24,7 @@ func (h *AuthorizeHandler) Handle(ctx context.Context, payload string) (user *do
 	}
 
 	if token.NeedRenew() {
-		newPayload, err = h.Session.Renew(user)
+		newPayload, err = h.Session.Renew(account)
 		if err != nil {
 			err = fmt.Errorf("renew session token, %w", err)
 			return

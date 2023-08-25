@@ -12,21 +12,21 @@ func newRouter(opt *option.Options) chi.Router {
 
 	router.Use(recoverer(slog.Default()))
 
-	uc := newUserController(opt)
-	router.Use(uc.Authorize)
+	ac := newAuthController(opt)
+	router.Use(ac.Authorize)
 
-	router.Post(`/session`, uc.LoginWithEmail())
-	router.Post(`/register`, uc.Register())
-	router.Delete(`/session`, uc.Logout())
-	router.Get(`/login/oauth/{site}`, uc.LoginWithOauth())
-	router.Post(`/login/oauth/{site}`, uc.VerifyOauth())
-	router.Post(`/register/oauth`, uc.RegisterWithOauth())
+	router.Post(`/session`, ac.LoginWithEmail())
+	router.Post(`/register`, ac.Register())
+	router.Delete(`/session`, ac.Logout())
+	router.Get(`/login/oauth/{site}`, ac.LoginWithOauth())
+	router.Post(`/login/oauth/{site}`, ac.VerifyOauth())
+	router.Post(`/register/oauth`, ac.RegisterWithOauth())
 
 	router.Group(func(router chi.Router) {
-		router.Use(uc.DenyAnonymous)
+		router.Use(ac.DenyAnonymous)
 
-		router.Get(`/session`, uc.MyIdentity())
-		router.Put(`/my/password`, uc.ChangePassword())
+		router.Get(`/session`, ac.MyIdentity())
+		router.Put(`/my/password`, ac.ChangePassword())
 	})
 
 	return router

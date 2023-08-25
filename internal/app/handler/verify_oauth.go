@@ -25,7 +25,7 @@ type VerifyOauth struct {
 type VerifyOauthResult struct {
 	// 三方验证完毕后，找到的对应系统账号
 	// 在没有绑定关系的情况下，会是空值
-	User *domain.User
+	Account *domain.Account
 	// 会话凭证
 	SessionToken string
 	// 三方账号的缓存凭证，后续使用这个凭证可以注册新账号或者绑定已有账号
@@ -37,7 +37,7 @@ type VerifyOauthHandler struct {
 	OauthToken *service.OauthTokenService
 	Session    *service.SessionTokenService
 	Oauth      adapter.OauthRepository
-	Users      adapter.UserRepository
+	Accounts   adapter.AccountRepository
 }
 
 // Handle 验证三方登录
@@ -55,8 +55,8 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 	}
 	vendorUser.Vendor = args.Client.Vendor()
 
-	user, err := h.findUser(ctx, vendorUser)
-	if errors.Is(err, domain.ErrUserNotFound) {
+	account, err := h.findAccount(ctx, vendorUser)
+	if errors.Is(err, domain.ErrAccountNotFound) {
 		var oauthToken string
 
 		oauthToken, err = h.OauthToken.Save(ctx, vendorUser)
@@ -67,26 +67,26 @@ func (h *VerifyOauthHandler) Handle(ctx context.Context, args VerifyOauth) (resu
 		result.OauthToken = oauthToken
 		return
 	} else if err != nil {
-		err = fmt.Errorf("find user by vendor uid, %w", err)
+		err = fmt.Errorf("find account by vendor uid, %w", err)
 		return
 	}
 
-	sessionToken, err := h.Session.Generate(ctx, user)
+	sessionToken, err := h.Session.Generate(ctx, account)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
 		return
 	}
 
-	result.User = user
+	result.Account = account
 	result.SessionToken = sessionToken
 	return
 }
 
-func (h *VerifyOauthHandler) findUser(ctx context.Context, vendorUser *oauth.User) (*domain.User, error) {
-	userID, err := h.Oauth.Find(ctx, vendorUser.Vendor, vendorUser.ID)
+func (h *VerifyOauthHandler) findAccount(ctx context.Context, vendorUser *oauth.User) (*domain.Account, error) {
+	accountID, err := h.Oauth.Find(ctx, vendorUser.Vendor, vendorUser.ID)
 	if err != nil {
-		return nil, fmt.Errorf("find user id, %w", err)
+		return nil, fmt.Errorf("find account id, %w", err)
 	}
 
-	return h.Users.Find(ctx, userID)
+	return h.Accounts.Find(ctx, accountID)
 }

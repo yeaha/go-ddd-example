@@ -31,18 +31,18 @@ type RegisterWithOauthHandler struct {
 }
 
 // Handle 三方登录，绑定或注册新账号
-func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWithOauth) (user *domain.User, sessionToken string, err error) {
+func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWithOauth) (account *domain.Account, sessionToken string, err error) {
 	vendorUser, err := h.OauthToken.Retrieve(ctx, args.OauthToken)
 	if err != nil {
-		err = fmt.Errorf("retrieve vendor user from cache, %w", err)
+		err = fmt.Errorf("retrieve vendor account from cache, %w", err)
 		return
 	}
 
 	var events []any
 	if err = entity.Transaction(h.DB, func(tx *sqlx.Tx) error {
-		user, events, err = h.handle(
+		account, events, err = h.handle(
 			ctx, args, vendorUser,
-			service.NewUserService(tx),
+			service.NewAccountService(tx),
 			infra.NewOauthDBRepository(tx),
 		)
 		return err
@@ -52,12 +52,12 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 
 	event.Publish(events...)
 
-	sessionToken, err = h.Session.Generate(ctx, user)
+	sessionToken, err = h.Session.Generate(ctx, account)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
 	}
 	event.Publish(event.Login{
-		User: user,
+		Account: account,
 	})
 	return
 }
@@ -66,17 +66,17 @@ func (h *RegisterWithOauthHandler) handle(
 	ctx context.Context,
 	args RegisterWithOauth,
 	vendorUser *oauth.User,
-	userService *service.UserService,
+	accountService *service.AccountService,
 	oauthRepos adapter.OauthRepository,
-) (user *domain.User, events []any, err error) {
+) (account *domain.Account, events []any, err error) {
 	if args.VerifyPassword != "" {
-		user, err = userService.Authorize(ctx, args.Email, args.VerifyPassword)
+		account, err = accountService.Authorize(ctx, args.Email, args.VerifyPassword)
 	} else {
-		user, err = userService.Create(ctx, args.Email, uuid.NewV4().String())
+		account, err = accountService.Create(ctx, args.Email, uuid.NewV4().String())
 
 		if err == nil {
 			events = append(events, event.Register{
-				User: user,
+				Account: account,
 			})
 		}
 	}
@@ -85,7 +85,7 @@ func (h *RegisterWithOauthHandler) handle(
 		return
 	}
 
-	if err = oauthRepos.Bind(ctx, user.ID, vendorUser.Vendor, vendorUser.ID); err != nil {
+	if err = oauthRepos.Bind(ctx, account.ID, vendorUser.Vendor, vendorUser.ID); err != nil {
 		err = fmt.Errorf("bound vendor user, %w", err)
 	}
 	return

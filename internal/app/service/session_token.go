@@ -22,56 +22,56 @@ var (
 
 // SessionTokenService 会话凭证逻辑
 type SessionTokenService struct {
-	Users adapter.UserRepository
+	Accounts adapter.AccountRepository
 }
 
 // Generate 构造会话凭证
-func (s *SessionTokenService) Generate(ctx context.Context, user *domain.User) (payload string, err error) {
-	if err := s.Suspend(ctx, user); err != nil {
+func (s *SessionTokenService) Generate(ctx context.Context, account *domain.Account) (payload string, err error) {
+	if err := s.Suspend(ctx, account); err != nil {
 		return "", err
 	}
 
-	return s.Renew(user)
+	return s.Renew(account)
 }
 
 // Renew 构造会话凭证，但不刷新session salt
-func (s *SessionTokenService) Renew(user *domain.User) (payload string, err error) {
-	token := newSessionToken(user)
-	return s.encode(token, user.SessionSalt), nil
+func (s *SessionTokenService) Renew(account *domain.Account) (payload string, err error) {
+	token := newSessionToken(account)
+	return s.encode(token, account.SessionSalt), nil
 }
 
 // Suspend 使指定账号会话失效
-func (s *SessionTokenService) Suspend(ctx context.Context, user *domain.User) error {
+func (s *SessionTokenService) Suspend(ctx context.Context, account *domain.Account) error {
 	// 通过替换sesion salt达到会话失效的目的
-	if err := user.RefreshSessionSalt(); err != nil {
+	if err := account.RefreshSessionSalt(); err != nil {
 		return fmt.Errorf("refresh session token, %w", err)
-	} else if err := s.Users.Save(ctx, user); err != nil {
-		return fmt.Errorf("save user, %w", err)
+	} else if err := s.Accounts.Save(ctx, account); err != nil {
+		return fmt.Errorf("save account, %w", err)
 	}
 	return nil
 }
 
 // Retrieve 恢复凭证内的信息
-func (s *SessionTokenService) Retrieve(ctx context.Context, payload string) (*domain.User, SessionToken, error) {
+func (s *SessionTokenService) Retrieve(ctx context.Context, payload string) (*domain.Account, SessionToken, error) {
 	token, err := s.decode(payload)
 	if err != nil {
 		return nil, token, fmt.Errorf("decode token, %w", err)
 	}
 
-	user, err := s.Users.Find(ctx, token.UserID)
+	account, err := s.Accounts.Find(ctx, token.AccountID)
 	if err != nil {
 		return nil, token, err
 	}
 
-	if s.encode(token, user.SessionSalt) != payload {
+	if s.encode(token, account.SessionSalt) != payload {
 		return nil, token, errors.New("invalid token signature")
 	}
-	return user, token, nil
+	return account, token, nil
 }
 
 // 构造包含签名的token字符串
 func (s *SessionTokenService) encode(token SessionToken, salt string) string {
-	payload := fmt.Sprintf("%s,%d", token.UserID, token.Expire)
+	payload := fmt.Sprintf("%s,%d", token.AccountID, token.Expire)
 	signature := s.sign(payload, salt)
 
 	return fmt.Sprintf("%s;%s", payload, signature)
@@ -88,9 +88,9 @@ func (s *SessionTokenService) decode(payload string) (SessionToken, error) {
 		return SessionToken{}, domain.ErrInvalidSessionToken
 	}
 
-	userID, err := uuid.FromString(id)
+	accountID, err := uuid.FromString(id)
 	if err != nil {
-		return SessionToken{}, fmt.Errorf("invalid user id, %w", err)
+		return SessionToken{}, fmt.Errorf("invalid account id, %w", err)
 	}
 
 	expireTime, err := strconv.Atoi(expire)
@@ -98,7 +98,7 @@ func (s *SessionTokenService) decode(payload string) (SessionToken, error) {
 		return SessionToken{}, fmt.Errorf("invalid expire time, %w", err)
 	}
 
-	return SessionToken{UserID: userID, Expire: int64(expireTime)}, nil
+	return SessionToken{AccountID: accountID, Expire: int64(expireTime)}, nil
 }
 
 // 计算数字签名
@@ -109,15 +109,15 @@ func (s *SessionTokenService) sign(payload string, salt string) string {
 
 // SessionToken 会话凭证
 type SessionToken struct {
-	UserID uuid.UUID
-	Expire int64 // 凭证过期时间
+	AccountID uuid.UUID
+	Expire    int64 // 凭证过期时间
 }
 
 // newSessionToken 生成会话凭证
-func newSessionToken(user *domain.User) SessionToken {
+func newSessionToken(account *domain.Account) SessionToken {
 	return SessionToken{
-		UserID: user.ID,
-		Expire: time.Now().Add(tokenExpire).Unix(),
+		AccountID: account.ID,
+		Expire:    time.Now().Add(tokenExpire).Unix(),
 	}
 }
 

@@ -25,34 +25,34 @@ func NewOauthDBRepository(db entity.DB) *OauthDBRepository {
 // Find 查询关联用户ID
 func (repos *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID string) (uuid.UUID, error) {
 	stmt := selectOauth.
-		Select(colUserID).
+		Select(colAccountID).
 		Where(
 			colVendor.Eq(vendor),
 			colVendorUID.Eq(vendorUID),
 		).
 		Limit(1)
 
-	var userID uuid.UUID
-	if err := entity.GetRecord(ctx, &userID, repos.db, stmt); err != nil {
+	var accountID uuid.UUID
+	if err := entity.GetRecord(ctx, &accountID, repos.db, stmt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return uuid.Nil, domain.ErrUserNotFound
+			return uuid.Nil, domain.ErrAccountNotFound
 		}
 		return uuid.Nil, err
 	}
-	return userID, nil
+	return accountID, nil
 }
 
 // Bind 账号绑定
-func (repos *OauthDBRepository) Bind(ctx context.Context, userID uuid.UUID, vendor, vendorUID string) error {
+func (repos *OauthDBRepository) Bind(ctx context.Context, accountID uuid.UUID, vendor, vendorUID string) error {
 	stmt := insertOauth.
 		Rows(goqu.Record{
-			"user_id":    userID,
+			"account_id": accountID,
 			"vendor":     vendor,
 			"vendor_uid": vendorUID,
 			"create_at":  goqu.L(`now()`),
 			"update_at":  goqu.L(`now()`),
 		}).
-		OnConflict(goqu.DoUpdate("user_id, vendor", goqu.Record{
+		OnConflict(goqu.DoUpdate("account_id, vendor", goqu.Record{
 			"vendor_uid": vendorUID,
 			"update_at":  goqu.L(`now()`),
 		}))

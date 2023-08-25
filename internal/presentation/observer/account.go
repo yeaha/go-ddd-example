@@ -16,7 +16,6 @@ type emailNotifier struct {
 }
 
 func (o *emailNotifier) Subscribe(ctx context.Context, events rxgo.Observable) rxgo.Disposed {
-
 	logger := logger.FromContext(ctx).With("scope", "observer.emailNotifier")
 	logger.Info("start")
 
@@ -30,7 +29,7 @@ func (o *emailNotifier) Subscribe(ctx context.Context, events rxgo.Observable) r
 				ev := item.(event.Register)
 
 				// 这里就不具体实现邮件发送，打条日志意思一下
-				logger.Info("send email to new user", "email", ev.User.Email)
+				logger.Info("send email to new user", "email", ev.Account.Email)
 			},
 			func(err error) {
 				logger.Error("handle event", "error", err)

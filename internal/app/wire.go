@@ -17,8 +17,8 @@ import (
 var (
 	repositoriesSet = wire.NewSet(
 		wire.NewSet(
-			infra.NewUserDBRepository,
-			wire.Bind(new(adapter.UserRepository), new(*infra.UserDBRepository)),
+			infra.NewAccountDBRepository,
+			wire.Bind(new(adapter.AccountRepository), new(*infra.AccountDBRepository)),
 		),
 		wire.NewSet(
 			infra.NewOauthDBRepository,
@@ -29,7 +29,7 @@ var (
 	serviceSet = wire.NewSet(
 		wire.Struct(new(service.OauthTokenService), "*"),
 		wire.Struct(new(service.SessionTokenService), "*"),
-		wire.Struct(new(service.UserService), "*"),
+		wire.Struct(new(service.AccountService), "*"),
 	)
 
 	applicationProvider = wire.NewSet(

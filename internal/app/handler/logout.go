@@ -13,6 +13,6 @@ type LogoutHandler struct {
 }
 
 // Handle 执行
-func (h *LogoutHandler) Handle(ctx context.Context, user *domain.User) error {
-	return h.Session.Suspend(ctx, user)
+func (h *LogoutHandler) Handle(ctx context.Context, account *domain.Account) error {
+	return h.Session.Suspend(ctx, account)
 }

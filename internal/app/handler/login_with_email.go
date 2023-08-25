@@ -17,26 +17,26 @@ type LoginWithEmail struct {
 
 // LoginWithEmailHandler 使用Email登录
 type LoginWithEmailHandler struct {
-	Session *service.SessionTokenService
-	Users   *service.UserService
+	Session  *service.SessionTokenService
+	Accounts *service.AccountService
 }
 
 // Handle 执行
-func (h *LoginWithEmailHandler) Handle(ctx context.Context, args LoginWithEmail) (user *domain.User, token string, err error) {
-	user, err = h.Users.Authorize(ctx, args.Email, args.Password)
+func (h *LoginWithEmailHandler) Handle(ctx context.Context, args LoginWithEmail) (account *domain.Account, token string, err error) {
+	account, err = h.Accounts.Authorize(ctx, args.Email, args.Password)
 	if err != nil {
-		err = fmt.Errorf("user authorize, %w", err)
+		err = fmt.Errorf("account authorize, %w", err)
 		return
 	}
 
-	token, err = h.Session.Generate(ctx, user)
+	token, err = h.Session.Generate(ctx, account)
 	if err != nil {
 		err = fmt.Errorf("generate session token, %w", err)
 		return
 	}
 
 	event.Publish(event.Login{
-		User: user,
+		Account: account,
 	})
 	return
 }

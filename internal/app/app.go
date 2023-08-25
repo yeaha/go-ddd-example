@@ -9,7 +9,7 @@ import (
 
 // Application 账号模块业务逻辑
 type Application struct {
-	UserRepository adapter.UserRepository
+	AccountRepository adapter.AccountRepository
 
 	Authorize         *handler.AuthorizeHandler
 	ChangePassword    *handler.ChangePasswordHandler

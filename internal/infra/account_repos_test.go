@@ -44,13 +44,13 @@ func init() {
 	entity.DefaultCacher = cache.NewMemoryCache()
 }
 
-func TestUserDBRepository(t *testing.T) {
-	suite.Run(t, &userRepositoryTestSuite{})
+func TestAccountDBRepository(t *testing.T) {
+	suite.Run(t, &accountRepositoryTestSuite{})
 }
 
-type userRepositoryTestSuite struct {
+type accountRepositoryTestSuite struct {
 	suite.Suite
-	repos *UserDBRepository
+	repos *AccountDBRepository
 	tx    *sqlx.Tx
 
 	ctx struct {
@@ -58,34 +58,34 @@ type userRepositoryTestSuite struct {
 	}
 }
 
-func (s *userRepositoryTestSuite) SetupSuite() {
+func (s *accountRepositoryTestSuite) SetupSuite() {
 	tx, err := testDB.BeginTxx(context.Background(), &sql.TxOptions{})
 	s.Require().NoError(err)
 
 	s.tx = tx
-	s.repos = NewUserDBRepository(tx)
+	s.repos = NewAccountDBRepository(tx)
 
 	s.ctx.Email = "test@test.com"
 }
 
-func (s *userRepositoryTestSuite) TearDownSuite() {
+func (s *accountRepositoryTestSuite) TearDownSuite() {
 	s.Require().NoError(s.tx.Rollback())
 }
 
-func (s *userRepositoryTestSuite) Test1_Create() {
+func (s *accountRepositoryTestSuite) Test1_Create() {
 	require := s.Require()
-	user := &domain.User{}
+	account := &domain.Account{}
 
-	require.NoError(user.SetEmail(s.ctx.Email))
-	require.NoError(user.SetPassword("abcdef"))
-	require.NoError(s.repos.Create(context.Background(), user))
+	require.NoError(account.SetEmail(s.ctx.Email))
+	require.NoError(account.SetPassword("abcdef"))
+	require.NoError(s.repos.Create(context.Background(), account))
 }
 
-func (s *userRepositoryTestSuite) Test2_FindByEmail() {
+func (s *accountRepositoryTestSuite) Test2_FindByEmail() {
 	require := s.Require()
 
 	_, err := s.repos.FindByEmail(context.Background(), "test@test.net")
-	require.ErrorIs(err, domain.ErrUserNotFound)
+	require.ErrorIs(err, domain.ErrAccountNotFound)
 
 	_, err = s.repos.FindByEmail(context.Background(), s.ctx.Email)
 	require.NoError(err)

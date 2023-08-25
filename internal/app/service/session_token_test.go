@@ -10,20 +10,20 @@ import (
 )
 
 func TestSessionTokenService(t *testing.T) {
-	user := &domain.User{
+	account := &domain.Account{
 		ID:          uuid.NewV4(),
 		SessionSalt: "54381095jfepwoqrp2",
 	}
-	token := newSessionToken(user)
+	token := newSessionToken(account)
 
 	service := SessionTokenService{}
-	payload := service.encode(token, user.SessionSalt)
+	payload := service.encode(token, account.SessionSalt)
 	require.NotEmpty(t, payload)
 
 	decoded, err := service.decode(payload)
 	require.NoError(t, err)
 
 	require.Equal(t, token, decoded)
-	require.Equal(t, service.encode(decoded, user.SessionSalt), payload)
+	require.Equal(t, service.encode(decoded, account.SessionSalt), payload)
 	require.NotEqual(t, service.encode(decoded, "abcfaof"), payload)
 }
