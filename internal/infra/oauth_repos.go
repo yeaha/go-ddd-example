@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"ddd-example/internal/domain"
 
@@ -44,17 +45,19 @@ func (repos *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID stri
 
 // Bind 账号绑定
 func (repos *OauthDBRepository) Bind(ctx context.Context, accountID uuid.UUID, vendor, vendorUID string) error {
+	now := time.Now().Unix()
+
 	stmt := insertOauth.
 		Rows(goqu.Record{
 			"account_id": accountID,
 			"vendor":     vendor,
 			"vendor_uid": vendorUID,
-			"create_at":  goqu.L(`now()`),
-			"update_at":  goqu.L(`now()`),
+			"create_at":  goqu.V(now),
+			"update_at":  goqu.V(now),
 		}).
 		OnConflict(goqu.DoUpdate("account_id, vendor", goqu.Record{
 			"vendor_uid": vendorUID,
-			"update_at":  goqu.L(`now()`),
+			"update_at":  goqu.V(now),
 		}))
 
 	_, err := entity.ExecInsert(ctx, repos.db, stmt)

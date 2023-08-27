@@ -6,43 +6,16 @@ package infra
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"os"
 	"testing"
 
 	"ddd-example/internal/domain"
-	"ddd-example/pkg/database"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/joyparty/entity"
-	"github.com/joyparty/entity/cache"
 	"github.com/stretchr/testify/suite"
 
 	// postgresql database driver
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
-
-var (
-	testDB *sqlx.DB
-)
-
-func init() {
-	dsn := os.Getenv("TESTDB")
-	if dsn == "" {
-		panic(fmt.Errorf("require ENV %q", "TESTDB"))
-	}
-
-	db, err := database.NewDB(database.Option{
-		Driver: "pgx",
-		DSN:    dsn,
-	})
-	if err != nil {
-		panic(fmt.Errorf("connect test database, %w", err))
-	}
-	testDB = db.Unsafe()
-
-	entity.DefaultCacher = cache.NewMemoryCache()
-}
 
 func TestAccountDBRepository(t *testing.T) {
 	suite.Run(t, &accountRepositoryTestSuite{})

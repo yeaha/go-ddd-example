@@ -17,29 +17,22 @@ test:
 .PHONY: alltest
 alltest:
 	cd ${MKFILE_DIR}
-	docker compose up -d && \
-	TESTDB="postgres://example:example@127.0.0.1:5432/example?sslmode=disable" \
-		go test -tags=dbtest -v ./... | grep -v '^?'
+	go test -tags=dbtest -v ./... | grep -v '^?'
 
 # go install github.com/mitranim/gow@latest
 .PHONY: serve
 serve:
 	cd ${MKFILE_DIR}
-	docker compose up -d && \
 	gow -v -s \
 		run -trimpath ${MKFILE_DIR}cmd/server/ \
 			-logLevel=trace \
-			-logPretty=true \
+			-dbDir=${MKFILE_DIR}db/ \
 			-config=${MKFILE_DIR}configs/server/server.toml
-
-.PHONY: db_cli
-db_cli:
-	cd ${MKFILE_DIR} && docker compose exec postgres psql -U example -d example
 
 .PHONY: clean
 clean:
-	cd ${MKFILE_DIR} && docker compose down -v
 	rm -rf ${DIST_DIR}/*
+	rm -rf ${MKFILE_DIR}db/*
 
 .PHONY: wire
 wire:

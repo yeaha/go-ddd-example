@@ -10,9 +10,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-
-	// database driver
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 )
 
 // FS 数据库迁移文件
@@ -29,7 +26,7 @@ func Execute(dir fs.FS, path string, dsn string) error {
 
 	m, err := migrate.NewWithSourceInstance("iofs", drv, dsn)
 	if err != nil {
-		return err
+		return fmt.Errorf("new migrate, %w", err)
 	}
 	defer m.Close()
 

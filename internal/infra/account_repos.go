@@ -21,12 +21,12 @@ type AccountDBRepository struct {
 }
 
 type accountRow struct {
-	ID       pgtype.UUID        `db:"id,primaryKey"`
-	Email    pgtype.Varchar     `db:"email"`
-	Password pgtype.Varchar     `db:"password"`
-	Setting  pgtype.JSONB       `db:"setting"`
-	CreateAt pgtype.Timestamptz `db:"create_at,refuseUpdate"`
-	UpdateAt pgtype.Timestamptz `db:"update_at"`
+	ID       pgtype.UUID    `db:"id,primaryKey"`
+	Email    pgtype.Varchar `db:"email"`
+	Password pgtype.Varchar `db:"password"`
+	Setting  pgtype.JSON    `db:"setting"`
+	CreateAt int64          `db:"create_at,refuseUpdate"`
+	UpdateAt int64          `db:"update_at"`
 }
 
 type accountRowSetting struct {
@@ -41,14 +41,12 @@ func newAccountRow() *accountRow {
 	row.Email.Status = pgtype.Null
 	row.Password.Status = pgtype.Null
 	row.Setting.Status = pgtype.Null
-	row.CreateAt.Status = pgtype.Null
-	row.UpdateAt.Status = pgtype.Null
 
 	return row
 }
 
 func (row accountRow) TableName() string {
-	return fmt.Sprintf("%s.%s", tableAccounts.GetSchema(), tableAccounts.GetTable())
+	return tableAccounts.GetTable()
 }
 
 func (row *accountRow) OnEntityEvent(_ context.Context, ev entity.Event) error {
@@ -59,11 +57,11 @@ func (row *accountRow) OnEntityEvent(_ context.Context, ev entity.Event) error {
 			}
 		}
 
-		now := time.Now()
-		database.SetTimestamptz(&row.CreateAt, now)
-		database.SetTimestamptz(&row.UpdateAt, now)
+		now := time.Now().Unix()
+		row.CreateAt = now
+		row.UpdateAt = now
 	} else if ev == entity.EventBeforeUpdate {
-		database.SetTimestamptz(&row.UpdateAt, time.Now())
+		row.UpdateAt = time.Now().Unix()
 	}
 
 	return nil

@@ -4,18 +4,22 @@ import (
 	"github.com/doug-martin/goqu/v9"
 
 	// sql dialect
-	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
+	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 )
 
+func init() {
+	goqu.SetDefaultPrepared(true)
+}
+
 var (
-	pgsql = goqu.Dialect("postgres")
+	sqlite = goqu.Dialect("sqlite3")
 
-	tableAccounts  = goqu.S(`account`).Table(`accounts`)
-	selectAccounts = pgsql.From(tableAccounts).Prepared(true)
+	tableAccounts  = goqu.T(`accounts`)
+	selectAccounts = sqlite.From(tableAccounts)
 
-	tableOauth  = goqu.S(`account`).Table(`oauth`)
-	selectOauth = pgsql.From(tableOauth).Prepared(true)
-	insertOauth = pgsql.Insert(tableOauth).Prepared(true)
+	tableOauth  = goqu.T(`oauth_accounts`)
+	selectOauth = sqlite.From(tableOauth)
+	insertOauth = sqlite.Insert(tableOauth)
 
 	colAccountID = goqu.C("account_id")
 	colCreateAt  = goqu.C("create_at")

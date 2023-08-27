@@ -16,9 +16,6 @@ import (
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
-
-	// database driver
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var (
@@ -27,19 +24,19 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&opt.LogPretty, "logPretty", false, "output pretty print log")
 	flag.StringVar(&opt.ConfigFile, "config", "", "config file")
 	flag.StringVar(&opt.LogLevel, "logLevel", "", "log level")
+	flag.StringVar(&opt.DBDir, "dbDir", "", "database dir")
 	flag.Parse()
 
 	initLogger(opt)
 
 	if opt.ConfigFile == "" {
-		logAndExist(context.Background(), "need config file")
+		logAndExist("need config file")
 	} else if err := opt.LoadFile(opt.ConfigFile); err != nil {
-		logAndExist(context.Background(), "load config file", "error", err)
+		logAndExist("load config file", "error", err)
 	} else if err := opt.Prepare(); err != nil {
-		logAndExist(context.Background(), "prepare resources", "error", err)
+		logAndExist("prepare resources", "error", err)
 	}
 
 	// 实体对象，默认使用本地内存缓存
@@ -99,7 +96,7 @@ func main() {
 	}
 }
 
-func logAndExist(ctx context.Context, msg string, args ...any) {
-	logger.Error(ctx, msg, args...)
+func logAndExist(msg string, args ...any) {
+	logger.Error(context.TODO(), msg, args...)
 	os.Exit(1) // revive:disable-line
 }

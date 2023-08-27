@@ -14,6 +14,7 @@ require (
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joyparty/entity v0.5.1
+	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/pmylund/go-cache v2.1.0+incompatible
 	github.com/reactivex/rxgo/v2 v2.5.0
 	github.com/satori/go.uuid v1.2.0
