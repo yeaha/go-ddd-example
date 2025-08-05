@@ -17,8 +17,7 @@ import (
 
 // OauthDBRepository 三方账号，数据库存储
 type OauthDBRepository struct {
-	db   entity.DB
-	base *entity.Repository[oauthID, *oauthRow]
+	db entity.DB
 }
 
 // NewOauthDBRepository 构造函数
