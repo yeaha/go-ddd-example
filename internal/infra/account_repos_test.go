@@ -5,61 +5,63 @@ package infra
 
 import (
 	"context"
-	"database/sql"
+	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"ddd-example/internal/domain"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/suite"
-
-	// postgresql database driver
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/joyparty/entity"
 )
 
-func TestAccountDBRepository(t *testing.T) {
-	suite.Run(t, &accountRepositoryTestSuite{})
-}
+func TestAccountRepository(t *testing.T) {
+	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-type accountRepositoryTestSuite struct {
-	suite.Suite
-	repos *AccountDBRepository
-	tx    *sqlx.Tx
+		email := "test@test.com"
 
-	ctx struct {
-		Email string
+		repos := NewAccountDBRepository(tx)
+
+		table := testTable{
+			{
+				Name: "Create",
+				Func: func() error {
+					account := &domain.Account{}
+					if err := account.SetEmail(email); err != nil {
+						return fmt.Errorf("set email, %w", err)
+					}
+
+					if err := account.SetPassword("abcdef"); err != nil {
+						return fmt.Errorf("set password, %w", err)
+					}
+
+					return repos.Create(ctx, account)
+				},
+			},
+			{
+				Name: "FindByEmail",
+				Func: func() error {
+					if _, err := repos.FindByEmail(ctx, "test@test.net"); err == nil {
+						return errors.New("expected error for non-existent account")
+					} else if !errors.Is(err, domain.ErrAccountNotFound) {
+						return fmt.Errorf("expected domain.ErrAccountNotFound, got %v", err)
+					}
+
+					_, err := repos.FindByEmail(ctx, email)
+					return err
+				},
+			},
+		}
+
+		if err := table.Execute(); err != nil {
+			return err
+		}
+
+		return errRollbackTest
+	}); !errors.Is(err, errRollbackTest) {
+		t.Fatalf("account repository, %v", err)
 	}
-}
-
-func (s *accountRepositoryTestSuite) SetupSuite() {
-	tx, err := testDB.BeginTxx(context.Background(), &sql.TxOptions{})
-	s.Require().NoError(err)
-
-	s.tx = tx
-	s.repos = NewAccountDBRepository(tx)
-
-	s.ctx.Email = "test@test.com"
-}
-
-func (s *accountRepositoryTestSuite) TearDownSuite() {
-	s.Require().NoError(s.tx.Rollback())
-}
-
-func (s *accountRepositoryTestSuite) Test1_Create() {
-	require := s.Require()
-	account := &domain.Account{}
-
-	require.NoError(account.SetEmail(s.ctx.Email))
-	require.NoError(account.SetPassword("abcdef"))
-	require.NoError(s.repos.Create(context.Background(), account))
-}
-
-func (s *accountRepositoryTestSuite) Test2_FindByEmail() {
-	require := s.Require()
-
-	_, err := s.repos.FindByEmail(context.Background(), "test@test.net")
-	require.ErrorIs(err, domain.ErrAccountNotFound)
-
-	_, err = s.repos.FindByEmail(context.Background(), s.ctx.Email)
-	require.NoError(err)
 }

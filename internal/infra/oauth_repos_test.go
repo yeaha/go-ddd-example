@@ -5,60 +5,64 @@ package infra
 
 import (
 	"context"
-	"database/sql"
+	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"ddd-example/internal/domain"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/suite"
+	"github.com/joyparty/entity"
 )
 
 func TestOauthDBRepository(t *testing.T) {
-	suite.Run(t, &oauthRepositoryTestSuite{})
-}
+	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-type oauthRepositoryTestSuite struct {
-	suite.Suite
-	tx    *sqlx.Tx
-	repos *OauthDBRepository
+		var (
+			accountID = uuid.New()
+			vendor    = "joyparty"
+			vendorUID = uuid.New().String()
+		)
 
-	ctx struct {
-		AccountID uuid.UUID
-		Vendor    string
-		VendorUID string
+		repos := NewOauthDBRepository(tx)
+
+		table := testTable{
+			{
+				Name: "Bind",
+				Func: func() error {
+					return repos.Bind(ctx, accountID, vendor, vendorUID)
+				},
+			},
+			{
+				Name: "Find",
+				Func: func() error {
+					if _, err := repos.Find(ctx, "foobar", uuid.New().String()); err == nil {
+						return errors.New("expected error for non-existent binding")
+					} else if !errors.Is(err, domain.ErrAccountNotFound) {
+						return fmt.Errorf("expected domain.ErrAccountNotFound, got %v", err)
+					}
+
+					if uid, err := repos.Find(ctx, vendor, vendorUID); err != nil {
+						return err
+					} else if uid != accountID {
+						return fmt.Errorf("expected %s, got %s", accountID, uid)
+					}
+
+					return nil
+				},
+			},
+		}
+
+		if err := table.Execute(); err != nil {
+			return err
+		}
+
+		return errRollbackTest
+	}); !errors.Is(err, errRollbackTest) {
+		t.Fatalf("oauth repository, %v", err)
 	}
-}
-
-func (s *oauthRepositoryTestSuite) SetupSuite() {
-	tx, err := testDB.BeginTxx(context.Background(), &sql.TxOptions{})
-	s.Require().NoError(err)
-
-	s.tx = tx
-	s.repos = NewOauthDBRepository(tx)
-
-	s.ctx.AccountID = uuid.Must(uuid.NewV7())
-	s.ctx.Vendor = "facebook"
-	s.ctx.VendorUID = uuid.Must(uuid.NewV7()).String()
-}
-
-func (s *oauthRepositoryTestSuite) TearDownSuite() {
-	s.Require().NoError(s.tx.Rollback())
-}
-
-func (s *oauthRepositoryTestSuite) Test1_Bind() {
-	err := s.repos.Bind(context.Background(), s.ctx.AccountID, s.ctx.Vendor, s.ctx.VendorUID)
-	s.Require().NoError(err)
-}
-
-func (s *oauthRepositoryTestSuite) Test2_Find() {
-	require := s.Require()
-
-	_, err := s.repos.Find(context.Background(), "google", uuid.Must(uuid.NewV7()).String())
-	require.ErrorIs(err, domain.ErrAccountNotFound)
-
-	uid, err := s.repos.Find(context.Background(), s.ctx.Vendor, s.ctx.VendorUID)
-	require.True(s.ctx.AccountID == uid)
-	require.NoError(err)
 }

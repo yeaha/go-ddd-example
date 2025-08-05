@@ -3,11 +3,13 @@
 package infra
 
 import (
-	"ddd-example/internal/migrate"
-	"ddd-example/pkg/database"
+	"errors"
 	"fmt"
 	"io/fs"
 	"strings"
+
+	"ddd-example/internal/migrate"
+	"ddd-example/pkg/database"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
@@ -18,6 +20,8 @@ import (
 )
 
 var (
+	errRollbackTest = errors.New("rollback test")
+
 	testDB *sqlx.DB
 )
 
@@ -50,4 +54,20 @@ func dbMigrate(source fs.FS, dir string, db *sqlx.DB) error {
 		}
 		return nil
 	})
+}
+
+type testFunc struct {
+	Name string
+	Func func() error
+}
+
+type testTable []testFunc
+
+func (r testTable) Execute() error {
+	for _, fn := range r {
+		if err := fn.Func(); err != nil {
+			return fmt.Errorf("%s: %w", fn.Name, err)
+		}
+	}
+	return nil
 }

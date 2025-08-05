@@ -12,7 +12,6 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/gorilla/schema v1.4.1
 	github.com/jackc/pgtype v1.14.4
-	github.com/jackc/pgx/v4 v4.18.2
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joyparty/entity v0.7.3
 	github.com/mattn/go-sqlite3 v1.14.30
@@ -30,18 +29,11 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.14.3 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/teivah/onecontext v1.3.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
