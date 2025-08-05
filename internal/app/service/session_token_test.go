@@ -5,13 +5,13 @@ import (
 
 	"ddd-example/internal/domain"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSessionTokenService(t *testing.T) {
 	account := &domain.Account{
-		ID:          uuid.NewV4(),
+		ID:          uuid.New(),
 		SessionSalt: "54381095jfepwoqrp2",
 	}
 	token := newSessionToken(account)

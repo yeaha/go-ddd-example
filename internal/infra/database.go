@@ -7,19 +7,15 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 )
 
-func init() {
-	goqu.SetDefaultPrepared(true)
-}
-
 var (
 	sqlite = goqu.Dialect("sqlite3")
 
-	tableAccounts  = goqu.T(`accounts`)
-	selectAccounts = sqlite.From(tableAccounts)
+	tableAccounts  = goqu.T((accountRow{}).TableName())
+	selectAccounts = sqlite.From(tableAccounts).Prepared(true)
 
-	tableOauth  = goqu.T(`oauth_accounts`)
-	selectOauth = sqlite.From(tableOauth)
-	insertOauth = sqlite.Insert(tableOauth)
+	tableOauth  = goqu.T((oauthRow{}).TableName())
+	selectOauth = sqlite.From(tableOauth).Prepared(true)
+	insertOauth = sqlite.Insert(tableOauth).Prepared(true)
 
 	colAccountID = goqu.C("account_id")
 	colCreateAt  = goqu.C("create_at")

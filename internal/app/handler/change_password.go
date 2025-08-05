@@ -27,7 +27,7 @@ func (h *ChangePasswordHandler) Handle(ctx context.Context, args ChangePassword)
 		return fmt.Errorf("compare old password, %w", domain.ErrWrongPassword)
 	} else if err := account.SetPassword(args.NewPassword); err != nil {
 		return fmt.Errorf("set new password, %w", err)
-	} else if err := h.Accounts.Save(ctx, account); err != nil {
+	} else if err := h.Accounts.Update(ctx, account); err != nil {
 		return fmt.Errorf("save account, %w", err)
 	}
 	return nil

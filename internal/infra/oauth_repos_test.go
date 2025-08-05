@@ -10,8 +10,8 @@ import (
 
 	"ddd-example/internal/domain"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -38,9 +38,9 @@ func (s *oauthRepositoryTestSuite) SetupSuite() {
 	s.tx = tx
 	s.repos = NewOauthDBRepository(tx)
 
-	s.ctx.AccountID = uuid.NewV4()
+	s.ctx.AccountID = uuid.Must(uuid.NewV7())
 	s.ctx.Vendor = "facebook"
-	s.ctx.VendorUID = uuid.NewV4().String()
+	s.ctx.VendorUID = uuid.Must(uuid.NewV7()).String()
 }
 
 func (s *oauthRepositoryTestSuite) TearDownSuite() {
@@ -55,10 +55,10 @@ func (s *oauthRepositoryTestSuite) Test1_Bind() {
 func (s *oauthRepositoryTestSuite) Test2_Find() {
 	require := s.Require()
 
-	_, err := s.repos.Find(context.Background(), "google", uuid.NewV4().String())
+	_, err := s.repos.Find(context.Background(), "google", uuid.Must(uuid.NewV7()).String())
 	require.ErrorIs(err, domain.ErrAccountNotFound)
 
 	uid, err := s.repos.Find(context.Background(), s.ctx.Vendor, s.ctx.VendorUID)
-	require.True(uuid.Equal(s.ctx.AccountID, uid))
+	require.True(s.ctx.AccountID == uid)
 	require.NoError(err)
 }

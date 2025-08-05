@@ -12,7 +12,7 @@ import (
 	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 var (
@@ -45,7 +45,7 @@ func (s *SessionTokenService) Suspend(ctx context.Context, account *domain.Accou
 	// 通过替换sesion salt达到会话失效的目的
 	if err := account.RefreshSessionSalt(); err != nil {
 		return fmt.Errorf("refresh session token, %w", err)
-	} else if err := s.Accounts.Save(ctx, account); err != nil {
+	} else if err := s.Accounts.Update(ctx, account); err != nil {
 		return fmt.Errorf("save account, %w", err)
 	}
 	return nil
@@ -88,7 +88,7 @@ func (s *SessionTokenService) decode(payload string) (SessionToken, error) {
 		return SessionToken{}, domain.ErrInvalidSessionToken
 	}
 
-	accountID, err := uuid.FromString(id)
+	accountID, err := uuid.Parse(id)
 	if err != nil {
 		return SessionToken{}, fmt.Errorf("invalid account id, %w", err)
 	}

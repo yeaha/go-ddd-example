@@ -10,14 +10,62 @@ import (
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/joyparty/entity"
-	uuid "github.com/satori/go.uuid"
 )
 
 // AccountDBRepository 用户账号，数据库存储
 type AccountDBRepository struct {
-	db entity.DB
+	db   entity.DB
+	base *entity.DomainObjectRepository[uuid.UUID, *domain.Account, *accountRow]
+}
+
+// NewAccountDBRepository 构造函数
+func NewAccountDBRepository(db entity.DB) *AccountDBRepository {
+	return &AccountDBRepository{
+		db: db,
+		base: entity.NewDomainObjectRepository(
+			entity.NewRepository[uuid.UUID, *accountRow](db),
+		),
+	}
+}
+
+// Find 使用ID查找
+func (r *AccountDBRepository) Find(ctx context.Context, accountID uuid.UUID) (*domain.Account, error) {
+	a, err := r.base.Find(ctx, accountID)
+	if entity.IsNotFound(err) {
+		return nil, domain.ErrAccountNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return a, nil
+}
+
+// FindByEmail 根据email查找对应账号
+func (r *AccountDBRepository) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
+	stmt := selectAccounts.Where(colEmail.Eq(email)).Limit(1)
+
+	row := &accountRow{}
+	if err := entity.GetRecord(ctx, row, r.db, stmt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrAccountNotFound
+		}
+		return nil, err
+	}
+
+	return row.ToDomainObject()
+}
+
+// Create 保存新用户
+func (r *AccountDBRepository) Create(ctx context.Context, account *domain.Account) error {
+	return r.base.Create(ctx, account)
+}
+
+// Update 更新用户数据
+func (r *AccountDBRepository) Update(ctx context.Context, account *domain.Account) error {
+	return r.base.Update(ctx, account)
 }
 
 type accountRow struct {
@@ -34,36 +82,25 @@ type accountRowSetting struct {
 	SessionSalt  string `json:"session_salt"`
 }
 
-func newAccountRow() *accountRow {
-	row := &accountRow{}
-
-	row.ID.Status = pgtype.Null
-	row.Email.Status = pgtype.Null
-	row.Password.Status = pgtype.Null
-	row.Setting.Status = pgtype.Null
-
-	return row
-}
-
 func (row accountRow) TableName() string {
-	return tableAccounts.GetTable()
+	return "accounts"
 }
 
-func (row *accountRow) OnEntityEvent(_ context.Context, ev entity.Event) error {
-	if ev == entity.EventBeforeInsert {
-		if row.ID.Status != pgtype.Present {
-			if err := database.SetUUID(&row.ID, uuid.NewV4()); err != nil {
-				return fmt.Errorf("set id, %w", err)
-			}
+func (row *accountRow) BeforeInsert(_ context.Context) error {
+	if row.ID.Status != pgtype.Present {
+		if err := database.SetUUID(&row.ID, uuid.Must(uuid.NewV7())); err != nil {
+			return fmt.Errorf("set id, %w", err)
 		}
-
-		now := time.Now().Unix()
-		row.CreateAt = now
-		row.UpdateAt = now
-	} else if ev == entity.EventBeforeUpdate {
-		row.UpdateAt = time.Now().Unix()
 	}
 
+	now := time.Now().Unix()
+	row.CreateAt = now
+	row.UpdateAt = now
+	return nil
+}
+
+func (row *accountRow) BeforeUpdate(_ context.Context) error {
+	row.UpdateAt = time.Now().Unix()
 	return nil
 }
 
@@ -74,7 +111,15 @@ func (row accountRow) CacheOption() entity.CacheOption {
 	}
 }
 
-func (row *accountRow) Set(u *domain.Account) error {
+func (row *accountRow) GetID() uuid.UUID {
+	return row.ID.Bytes
+}
+
+func (row *accountRow) SetID(id uuid.UUID) error {
+	return database.SetUUID(&row.ID, id)
+}
+
+func (row *accountRow) Set(_ context.Context, u *domain.Account) error {
 	if err := database.SetUUID(&row.ID, u.ID); err != nil {
 		return fmt.Errorf("set id, %w", err)
 	} else if err := database.SetVarchar(&row.Email, u.Email); err != nil {
@@ -93,7 +138,7 @@ func (row *accountRow) Set(u *domain.Account) error {
 	return nil
 }
 
-func (row accountRow) toDomain() (*domain.Account, error) {
+func (row accountRow) ToDomainObject() (*domain.Account, error) {
 	setting := &accountRowSetting{}
 	if err := row.Setting.AssignTo(setting); err != nil {
 		return nil, fmt.Errorf("decode setting, %w", err)
@@ -106,71 +151,4 @@ func (row accountRow) toDomain() (*domain.Account, error) {
 		PasswordSalt: setting.PasswordSalt,
 		SessionSalt:  setting.SessionSalt,
 	}, nil
-}
-
-// NewAccountDBRepository 构造函数
-func NewAccountDBRepository(db entity.DB) *AccountDBRepository {
-	return &AccountDBRepository{db: db}
-}
-
-// Find 使用ID查找
-func (repos *AccountDBRepository) Find(ctx context.Context, accountID uuid.UUID) (*domain.Account, error) {
-	row := &accountRow{}
-	if err := database.SetUUID(&row.ID, accountID); err != nil {
-		return nil, fmt.Errorf("set id, %w", err)
-	} else if err := entity.Load(ctx, row, repos.db); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrAccountNotFound
-		}
-		return nil, err
-	}
-
-	account, err := row.toDomain()
-	if err != nil {
-		return nil, fmt.Errorf("retrieve row values, %w", err)
-	}
-	return account, nil
-}
-
-// FindByEmail 根据email查找对应账号
-func (repos *AccountDBRepository) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
-	stmt := selectAccounts.Where(colEmail.Eq(email)).Limit(1)
-
-	row := &accountRow{}
-	if err := entity.GetRecord(ctx, row, repos.db, stmt); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrAccountNotFound
-		}
-		return nil, err
-	}
-
-	account, err := row.toDomain()
-	if err != nil {
-		return nil, fmt.Errorf("retrieve row values, %w", err)
-	}
-	return account, nil
-}
-
-// Create 保存新用户
-func (repos *AccountDBRepository) Create(ctx context.Context, account *domain.Account) error {
-	row := newAccountRow()
-	if err := row.Set(account); err != nil {
-		return fmt.Errorf("set row values, %w", err)
-	}
-
-	_, err := entity.Insert(ctx, row, repos.db)
-	if err == nil {
-		account.ID = row.ID.Bytes
-	}
-	return err
-}
-
-// Save 更新用户数据
-func (repos *AccountDBRepository) Save(ctx context.Context, account *domain.Account) error {
-	row := newAccountRow()
-	if err := row.Set(account); err != nil {
-		return fmt.Errorf("set row values, %w", err)
-	}
-
-	return entity.Update(ctx, row, repos.db)
 }

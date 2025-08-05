@@ -11,7 +11,7 @@ import (
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/oauth"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 // OauthTokenService 三方验证结果缓存
@@ -27,7 +27,7 @@ func (s *OauthTokenService) Save(ctx context.Context, vendorUser *oauth.User) (t
 		return
 	}
 
-	token = uuid.NewV4().String()
+	token = uuid.New().String()
 	err = s.Cache.Put(ctx, token, value, 10*time.Minute)
 	return
 }

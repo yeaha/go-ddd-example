@@ -4,18 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"ddd-example/internal/domain"
+	"ddd-example/pkg/database"
 
-	"github.com/doug-martin/goqu/v9"
+	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
 	"github.com/joyparty/entity"
-	uuid "github.com/satori/go.uuid"
 )
 
 // OauthDBRepository 三方账号，数据库存储
 type OauthDBRepository struct {
-	db entity.DB
+	db   entity.DB
+	base *entity.Repository[oauthID, *oauthRow]
 }
 
 // NewOauthDBRepository 构造函数
@@ -24,7 +27,7 @@ func NewOauthDBRepository(db entity.DB) *OauthDBRepository {
 }
 
 // Find 查询关联用户ID
-func (repos *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID string) (uuid.UUID, error) {
+func (r *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID string) (uuid.UUID, error) {
 	stmt := selectOauth.
 		Select(colAccountID).
 		Where(
@@ -34,7 +37,7 @@ func (repos *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID stri
 		Limit(1)
 
 	var accountID uuid.UUID
-	if err := entity.GetRecord(ctx, &accountID, repos.db, stmt); err != nil {
+	if err := entity.GetRecord(ctx, &accountID, r.db, stmt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return uuid.Nil, domain.ErrAccountNotFound
 		}
@@ -44,22 +47,59 @@ func (repos *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID stri
 }
 
 // Bind 账号绑定
-func (repos *OauthDBRepository) Bind(ctx context.Context, accountID uuid.UUID, vendor, vendorUID string) error {
+func (r *OauthDBRepository) Bind(ctx context.Context, accountID uuid.UUID, vendor, vendorUID string) error {
+	row := &oauthRow{}
+	if err := row.SetID(oauthID{AccountID: accountID, Vendor: vendor}); err != nil {
+		return fmt.Errorf("set oauth id: %w", err)
+	} else if err := database.SetText(&row.VendorID, vendorUID); err != nil {
+		return fmt.Errorf("set vendor_uid: %w", err)
+	}
+
+	return entity.Upsert(ctx, row, r.db)
+}
+
+type oauthID struct {
+	AccountID uuid.UUID
+	Vendor    string
+}
+
+type oauthRow struct {
+	AccountID pgtype.UUID `db:"account_id,primaryKey"`
+	Vendor    pgtype.Text `db:"vendor,primaryKey"`
+	VendorID  pgtype.Text `db:"vendor_uid"`
+	CreateAt  pgtype.Int4 `db:"create_at,refuseUpdate"`
+	UpdateAt  pgtype.Int4 `db:"update_at"`
+}
+
+func (row oauthRow) TableName() string {
+	return "oauth_accounts"
+}
+
+func (row *oauthRow) BeforeInsert(_ context.Context) error {
 	now := time.Now().Unix()
 
-	stmt := insertOauth.
-		Rows(goqu.Record{
-			"account_id": accountID,
-			"vendor":     vendor,
-			"vendor_uid": vendorUID,
-			"create_at":  goqu.V(now),
-			"update_at":  goqu.V(now),
-		}).
-		OnConflict(goqu.DoUpdate("account_id, vendor", goqu.Record{
-			"vendor_uid": vendorUID,
-			"update_at":  goqu.V(now),
-		}))
+	if err := row.CreateAt.Set(now); err != nil {
+		return fmt.Errorf("set create_at: %w", err)
+	} else if err := row.UpdateAt.Set(now); err != nil {
+		return fmt.Errorf("set update_at: %w", err)
+	}
+	return nil
+}
 
-	_, err := entity.ExecInsert(ctx, repos.db, stmt)
-	return err
+func (row *oauthRow) BeforeUpdate(_ context.Context) error {
+	now := time.Now().Unix()
+
+	if err := row.UpdateAt.Set(now); err != nil {
+		return fmt.Errorf("set update_at: %w", err)
+	}
+	return nil
+}
+
+func (row *oauthRow) SetID(id oauthID) error {
+	if err := database.SetUUID(&row.AccountID, id.AccountID); err != nil {
+		return fmt.Errorf("set account_id: %w", err)
+	} else if err := database.SetText(&row.Vendor, id.Vendor); err != nil {
+		return fmt.Errorf("set vendor: %w", err)
+	}
+	return nil
 }

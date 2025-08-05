@@ -11,9 +11,9 @@ import (
 	"ddd-example/internal/infra"
 	"ddd-example/pkg/oauth"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
-	uuid "github.com/satori/go.uuid"
 )
 
 // RegisterWithOauth 三方账号注册，参数
@@ -72,7 +72,7 @@ func (h *RegisterWithOauthHandler) handle(
 	if args.VerifyPassword != "" {
 		account, err = accountService.Authorize(ctx, args.Email, args.VerifyPassword)
 	} else {
-		account, err = accountService.Create(ctx, args.Email, uuid.NewV4().String())
+		account, err = accountService.Create(ctx, args.Email, uuid.New().String())
 
 		if err == nil {
 			events = append(events, event.Register{

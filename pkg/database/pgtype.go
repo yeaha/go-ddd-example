@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
-	uuid "github.com/satori/go.uuid"
 )
 
 // ToUnix 转换为unix timestamp
@@ -41,7 +41,7 @@ func SetTimestamptz(dst *pgtype.Timestamptz, t any) error {
 func SetUUID(dst *pgtype.UUID, src any) error {
 	switch v := src.(type) {
 	case uuid.UUID:
-		if !uuid.Equal(v, uuid.Nil) {
+		if v != uuid.Nil {
 			return dst.Set(v)
 		}
 	case uuid.NullUUID:

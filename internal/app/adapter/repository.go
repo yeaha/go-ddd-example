@@ -5,7 +5,7 @@ import (
 
 	"ddd-example/internal/domain"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 // AccountRepository 账号信息存储
@@ -13,7 +13,7 @@ type AccountRepository interface {
 	Find(ctx context.Context, accountID uuid.UUID) (*domain.Account, error)
 	FindByEmail(ctx context.Context, email string) (*domain.Account, error)
 	Create(ctx context.Context, account *domain.Account) error
-	Save(ctx context.Context, account *domain.Account) error
+	Update(ctx context.Context, account *domain.Account) error
 }
 
 // OauthRepository 三方账号关联
