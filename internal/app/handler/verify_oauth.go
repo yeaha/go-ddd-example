@@ -34,10 +34,10 @@ type VerifyOauthResult struct {
 
 // VerifyOauthHandler 三方登录验证
 type VerifyOauthHandler struct {
-	OauthToken *service.OauthTokenService
-	Session    *service.SessionTokenService
-	Oauth      adapter.OauthRepository
-	Accounts   adapter.AccountRepository
+	OauthToken *service.OauthTokenService   `do:""`
+	Session    *service.SessionTokenService `do:""`
+	Oauth      adapter.OauthRepository      `do:""`
+	Accounts   adapter.AccountRepository    `do:""`
 }
 
 // Handle 验证三方登录

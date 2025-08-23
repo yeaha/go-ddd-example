@@ -23,7 +23,7 @@ func TestAccountRepository(t *testing.T) {
 
 		email := "test@test.com"
 
-		repos := NewAccountDBRepository(tx)
+		repos := newAccountDBRepository(tx)
 
 		table := testTable{
 			{

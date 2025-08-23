@@ -7,26 +7,36 @@ import (
 	"fmt"
 	"time"
 
+	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
+	"github.com/samber/do/v2"
 )
 
-// OauthDBRepository 三方账号，数据库存储
-type OauthDBRepository struct {
+// oauthDBRepository 三方账号，数据库存储
+type oauthDBRepository struct {
 	db entity.DB
 }
 
-// NewOauthDBRepository 构造函数
-func NewOauthDBRepository(db entity.DB) *OauthDBRepository {
-	return &OauthDBRepository{db: db}
+// OauthRepositoryProvider provide oauth repository
+func OauthRepositoryProvider(injector do.Injector) (adapter.OauthRepository, error) {
+	return &oauthDBRepository{
+		db: do.MustInvoke[*sqlx.DB](injector),
+	}, nil
+}
+
+// NewOauthRepositoryTx returns oauth repository with transaction.
+func NewOauthRepositoryTx(tx *sqlx.Tx) adapter.OauthRepository {
+	return &oauthDBRepository{db: tx}
 }
 
 // Find 查询关联用户ID
-func (r *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID string) (uuid.UUID, error) {
+func (r *oauthDBRepository) Find(ctx context.Context, vendor, vendorUID string) (uuid.UUID, error) {
 	stmt := selectOauth.
 		Select(colAccountID).
 		Where(
@@ -46,7 +56,7 @@ func (r *OauthDBRepository) Find(ctx context.Context, vendor, vendorUID string) 
 }
 
 // Bind 账号绑定
-func (r *OauthDBRepository) Bind(ctx context.Context, accountID uuid.UUID, vendor, vendorUID string) error {
+func (r *oauthDBRepository) Bind(ctx context.Context, accountID uuid.UUID, vendor, vendorUID string) error {
 	row := &oauthRow{}
 	if err := row.SetID(oauthID{AccountID: accountID, Vendor: vendor}); err != nil {
 		return fmt.Errorf("set oauth id: %w", err)

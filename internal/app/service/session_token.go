@@ -22,7 +22,7 @@ var (
 
 // SessionTokenService 会话凭证逻辑
 type SessionTokenService struct {
-	Accounts adapter.AccountRepository
+	Accounts adapter.AccountRepository `do:""`
 }
 
 // Generate 构造会话凭证

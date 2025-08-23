@@ -9,6 +9,8 @@ import (
 	"sync"
 	"syscall"
 
+	"ddd-example/internal/app"
+	"ddd-example/internal/infra"
 	"ddd-example/internal/option"
 	"ddd-example/internal/presentation/httpapi"
 	"ddd-example/internal/presentation/observer"
@@ -16,11 +18,14 @@ import (
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
+	"github.com/samber/do/v2"
 )
 
 var (
 	// 系统配置
 	opt = &option.Options{}
+
+	injector do.Injector
 )
 
 func init() {
@@ -41,6 +46,13 @@ func init() {
 
 	// 实体对象，默认使用本地内存缓存
 	entity.DefaultCacher = cache.NewMemoryCache()
+
+	injector = do.New(
+		opt.Providers(),
+		infra.Providers,
+		app.Providers,
+		httpapi.Providers,
+	)
 }
 
 func initLogger(opt *option.Options) {
@@ -67,33 +79,31 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	server := httpapi.NewServer(opt)
+	server := do.MustInvoke[*httpapi.Server](injector)
 
 	// 领域事件
 	observer.Start(ctx, opt)
 
-	sc := make(chan os.Signal)
+	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
 
-	select {
-	case s := <-sc:
-		logger.Debug(ctx, "receive signal", "signal", s)
+	s := <-sc
+	logger.Debug(ctx, "receive signal", "signal", s)
 
-		wg := &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
-		wg.Add(1)
-		if err := server.Close(wg); err != nil {
-			logger.Error(ctx, "shutdown server", "error", err)
-		} else {
-			logger.Info(ctx, "shutdown server")
-		}
-
-		wg.Add(1)
-		observer.Stop(wg)
-
-		wg.Wait()
-		os.Exit(0)
+	wg.Add(1)
+	if err := server.Close(wg); err != nil {
+		logger.Error(ctx, "shutdown server", "error", err)
+	} else {
+		logger.Info(ctx, "shutdown server")
 	}
+
+	wg.Add(1)
+	observer.Stop(wg)
+
+	wg.Wait()
+	os.Exit(0)
 }
 
 func logAndExist(msg string, args ...any) {

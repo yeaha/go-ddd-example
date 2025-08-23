@@ -15,13 +15,9 @@ var (
 
 	tableOauth  = goqu.T((oauthRow{}).TableName())
 	selectOauth = sqlite.From(tableOauth).Prepared(true)
-	insertOauth = sqlite.Insert(tableOauth).Prepared(true)
 
 	colAccountID = goqu.C("account_id")
-	colCreateAt  = goqu.C("create_at")
 	colEmail     = goqu.C("email")
-	colID        = goqu.C("id")
-	colUpdateAt  = goqu.C("update_at")
 	colVendor    = goqu.C("vendor")
 	colVendorUID = goqu.C("vendor_uid")
 )

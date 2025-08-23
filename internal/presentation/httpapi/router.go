@@ -1,18 +1,18 @@
 package httpapi
 
 import (
-	"ddd-example/internal/option"
 	"log/slog"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/samber/do/v2"
 )
 
-func newRouter(opt *option.Options) chi.Router {
+func routerProvider(injector do.Injector) (chi.Router, error) {
 	router := chi.NewRouter()
 
 	router.Use(recoverer(slog.Default()))
 
-	ac := newAuthController(opt)
+	ac := do.MustInvokeStruct[*authController](injector)
 	router.Use(ac.Authorize)
 
 	router.Post(`/session`, ac.LoginWithEmail())
@@ -29,5 +29,5 @@ func newRouter(opt *option.Options) chi.Router {
 		router.Put(`/my/password`, ac.ChangePassword())
 	})
 
-	return router
+	return router, nil
 }

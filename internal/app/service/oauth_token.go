@@ -16,7 +16,7 @@ import (
 
 // OauthTokenService 三方验证结果缓存
 type OauthTokenService struct {
-	Cache adapter.Cacher
+	Cache adapter.Cacher `do:""`
 }
 
 // Save 缓存三方账号信息

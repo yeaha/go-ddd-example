@@ -17,8 +17,8 @@ type Register struct {
 
 // RegisterHandler 账号注册
 type RegisterHandler struct {
-	Session  *service.SessionTokenService
-	Accounts *service.AccountService
+	Session  *service.SessionTokenService `do:""`
+	Accounts *service.AccountService      `do:""`
 }
 
 // Handle 执行账号注册

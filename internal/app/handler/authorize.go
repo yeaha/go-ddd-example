@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
+	"fmt"
+
 	"ddd-example/internal/app/service"
 	"ddd-example/internal/domain"
-	"fmt"
 )
 
 // AuthorizeHandler 验证访问者信息
 type AuthorizeHandler struct {
-	Session *service.SessionTokenService
+	Session *service.SessionTokenService `do:""`
 }
 
 // Handle 执行

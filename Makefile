@@ -34,10 +34,6 @@ clean:
 	rm -rf ${DIST_DIR}/*
 	rm -rf ${MKFILE_DIR}db/*
 
-.PHONY: wire
-wire:
-	wire gen ./...
-
 .PHONY: revive
 revive:
 	revive -config revive.toml -exclude ./vendor/... ./...

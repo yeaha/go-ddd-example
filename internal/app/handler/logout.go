@@ -9,7 +9,7 @@ import (
 
 // LogoutHandler 退出登录
 type LogoutHandler struct {
-	Session *service.SessionTokenService
+	Session *service.SessionTokenService `do:""`
 }
 
 // Handle 执行

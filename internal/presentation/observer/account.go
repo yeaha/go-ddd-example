@@ -3,7 +3,6 @@ package observer
 import (
 	"context"
 
-	"ddd-example/internal/app"
 	"ddd-example/internal/app/event"
 	"ddd-example/pkg/logger"
 
@@ -11,9 +10,7 @@ import (
 )
 
 // 在用户注册成功之后发送邮件
-type emailNotifier struct {
-	App *app.Application
-}
+type emailNotifier struct{}
 
 func (o *emailNotifier) Subscribe(ctx context.Context, events rxgo.Observable) rxgo.Disposed {
 	logger := logger.FromContext(ctx).With("scope", "observer.emailNotifier")

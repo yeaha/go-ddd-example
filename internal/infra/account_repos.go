@@ -7,23 +7,35 @@ import (
 	"fmt"
 	"time"
 
+	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
+	"github.com/samber/do/v2"
 )
 
-// AccountDBRepository 用户账号，数据库存储
-type AccountDBRepository struct {
+// accountDBRepository 用户账号，数据库存储
+type accountDBRepository struct {
 	db   entity.DB
 	base *entity.DomainObjectRepository[uuid.UUID, *domain.Account, *accountRow]
 }
 
-// NewAccountDBRepository 构造函数
-func NewAccountDBRepository(db entity.DB) *AccountDBRepository {
-	return &AccountDBRepository{
+// AccountRepositoryProvider 账户仓库提供者
+func AccountRepositoryProvider(injector do.Injector) (adapter.AccountRepository, error) {
+	return newAccountDBRepository(do.MustInvoke[*sqlx.DB](injector)), nil
+}
+
+// NewAccountRepositoryTx returns a new AccountDBRepository with a transaction.
+func NewAccountRepositoryTx(tx *sqlx.Tx) adapter.AccountRepository {
+	return newAccountDBRepository(tx)
+}
+
+func newAccountDBRepository(db entity.DB) *accountDBRepository {
+	return &accountDBRepository{
 		db: db,
 		base: entity.NewDomainObjectRepository(
 			entity.NewRepository[uuid.UUID, *accountRow](db),
@@ -32,7 +44,7 @@ func NewAccountDBRepository(db entity.DB) *AccountDBRepository {
 }
 
 // Find 使用ID查找
-func (r *AccountDBRepository) Find(ctx context.Context, accountID uuid.UUID) (*domain.Account, error) {
+func (r *accountDBRepository) Find(ctx context.Context, accountID uuid.UUID) (*domain.Account, error) {
 	a, err := r.base.Find(ctx, accountID)
 	if entity.IsNotFound(err) {
 		return nil, domain.ErrAccountNotFound
@@ -44,7 +56,7 @@ func (r *AccountDBRepository) Find(ctx context.Context, accountID uuid.UUID) (*d
 }
 
 // FindByEmail 根据email查找对应账号
-func (r *AccountDBRepository) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
+func (r *accountDBRepository) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
 	stmt := selectAccounts.Where(colEmail.Eq(email)).Limit(1)
 
 	row := &accountRow{}
@@ -59,12 +71,12 @@ func (r *AccountDBRepository) FindByEmail(ctx context.Context, email string) (*d
 }
 
 // Create 保存新用户
-func (r *AccountDBRepository) Create(ctx context.Context, account *domain.Account) error {
+func (r *accountDBRepository) Create(ctx context.Context, account *domain.Account) error {
 	return r.base.Create(ctx, account)
 }
 
 // Update 更新用户数据
-func (r *AccountDBRepository) Update(ctx context.Context, account *domain.Account) error {
+func (r *accountDBRepository) Update(ctx context.Context, account *domain.Account) error {
 	return r.base.Update(ctx, account)
 }
 

@@ -17,7 +17,7 @@ type ChangePassword struct {
 
 // ChangePasswordHandler 替换密码
 type ChangePasswordHandler struct {
-	Accounts adapter.AccountRepository
+	Accounts adapter.AccountRepository `do:""`
 }
 
 // Handle 执行替换密码

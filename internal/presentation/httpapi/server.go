@@ -9,6 +9,9 @@ import (
 
 	"ddd-example/internal/option"
 	"ddd-example/pkg/logger"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/samber/do/v2"
 )
 
 // Server http服务
@@ -17,13 +20,15 @@ type Server struct {
 	server *http.Server
 }
 
-// NewServer 构造http服务并启动
-func NewServer(opt *option.Options) *Server {
+// ServerProvider 提供Server实例
+func ServerProvider(injector do.Injector) (*Server, error) {
+	opt := do.MustInvoke[*option.Options](injector)
+
 	s := &Server{
 		opt: opt,
 		server: &http.Server{
 			Addr:    fmt.Sprintf(":%d", opt.HTTP.Port),
-			Handler: newRouter(opt),
+			Handler: do.MustInvoke[chi.Router](injector),
 		},
 	}
 
@@ -34,7 +39,7 @@ func NewServer(opt *option.Options) *Server {
 		}
 	}()
 
-	return s
+	return s, nil
 }
 
 // Close 关闭服务

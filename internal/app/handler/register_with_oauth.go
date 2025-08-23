@@ -25,9 +25,9 @@ type RegisterWithOauth struct {
 
 // RegisterWithOauthHandler 三方账号注册
 type RegisterWithOauthHandler struct {
-	DB         *sqlx.DB
-	Session    *service.SessionTokenService
-	OauthToken *service.OauthTokenService
+	DB         *sqlx.DB                     `do:""`
+	Session    *service.SessionTokenService `do:""`
+	OauthToken *service.OauthTokenService   `do:""`
 }
 
 // Handle 三方登录，绑定或注册新账号
@@ -43,7 +43,7 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 		account, events, err = h.handle(
 			ctx, args, vendorUser,
 			service.NewAccountService(tx),
-			infra.NewOauthDBRepository(tx),
+			infra.NewOauthRepositoryTx(tx),
 		)
 		return err
 	}); err != nil {

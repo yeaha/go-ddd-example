@@ -28,7 +28,7 @@ func TestOauthDBRepository(t *testing.T) {
 			vendorUID = uuid.New().String()
 		)
 
-		repos := NewOauthDBRepository(tx)
+		repos := NewOauthRepositoryTx(tx)
 
 		table := testTable{
 			{

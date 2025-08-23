@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"time"
 
-	"ddd-example/internal/app"
 	"ddd-example/internal/app/handler"
 	"ddd-example/internal/domain"
 	"ddd-example/internal/option"
@@ -17,30 +16,32 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var (
-	visitorKey contextKey = "__VISITOR__"
-)
+var visitorKey contextKey = "__VISITOR__"
 
 type contextKey any
 
 // authController 账号相关接口
 type authController struct {
-	App *app.Application
-	opt *option.Options
-}
+	// revive:disable:struct-tag
 
-func newAuthController(opt *option.Options) *authController {
-	return &authController{
-		App: app.NewApplication(opt),
-		opt: opt,
-	}
+	opt *option.Options `do:""`
+
+	authorize         *handler.AuthorizeHandler         `do:""`
+	changePassword    *handler.ChangePasswordHandler    `do:""`
+	loginWithEmail    *handler.LoginWithEmailHandler    `do:""`
+	logout            *handler.LogoutHandler            `do:""`
+	register          *handler.RegisterHandler          `do:""`
+	registerWithOauth *handler.RegisterWithOauthHandler `do:""`
+	verifyOauth       *handler.VerifyOauthHandler       `do:""`
+
+	// revive:enable:struct-tag
 }
 
 // Authorize 获取访问者账号中间件
 func (c *authController) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if payload, ok := c.readSessionToken(r); ok {
-			account, newPayload, err := c.App.Authorize.Handle(r.Context(), payload)
+			account, newPayload, err := c.authorize.Handle(r.Context(), payload)
 			if err == nil {
 				r = r.WithContext(context.WithValue(r.Context(), visitorKey, account))
 
@@ -96,7 +97,7 @@ func (c *authController) LoginWithEmail() http.HandlerFunc {
 		req := handler.LoginWithEmail{}
 		mustScanJSON(&req, r.Body)
 
-		_, token, err := c.App.LoginWithEmail.Handle(r.Context(), req)
+		_, token, err := c.loginWithEmail.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrAccountNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 				panic(errUnauthorized)
@@ -113,7 +114,7 @@ func (c *authController) LoginWithEmail() http.HandlerFunc {
 func (c *authController) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if account, ok := visitorFromCtx(r.Context()); ok {
-			if err := c.App.Logout.Handle(r.Context(), account); err != nil {
+			if err := c.logout.Handle(r.Context(), account); err != nil {
 				panic(errUnexpectedException.WrapError(err))
 			}
 		}
@@ -128,7 +129,7 @@ func (c *authController) Register() http.HandlerFunc {
 		req := handler.Register{}
 		mustScanJSON(&req, r.Body)
 
-		_, token, err := c.App.Register.Handle(r.Context(), req)
+		_, token, err := c.register.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrEmailRegistered) {
 				panic(errEmailRegistered)
@@ -149,7 +150,7 @@ func (c *authController) ChangePassword() http.HandlerFunc {
 		}
 		mustScanJSON(&req, r.Body)
 
-		if err := c.App.ChangePassword.Handle(r.Context(), req); err != nil {
+		if err := c.changePassword.Handle(r.Context(), req); err != nil {
 			if errors.Is(err, domain.ErrWrongPassword) {
 				panic(errWrongPassword)
 			}
@@ -209,7 +210,7 @@ func (c *authController) VerifyOauth() http.HandlerFunc {
 		}
 		req.Query = query
 
-		result, err := c.App.VerifyOauth.Handle(r.Context(), req)
+		result, err := c.verifyOauth.Handle(r.Context(), req)
 		if err != nil {
 			panic(errUnexpectedException.WrapError(err))
 		} else if account := result.Account; account != nil {
@@ -239,7 +240,7 @@ func (c *authController) RegisterWithOauth() http.HandlerFunc {
 		req := handler.RegisterWithOauth{}
 		mustScanJSON(&req, r.Body)
 
-		account, token, err := c.App.RegisterWithOauth.Handle(r.Context(), req)
+		account, token, err := c.registerWithOauth.Handle(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, domain.ErrInvalidOauthToken) {
 				panic(errInvalidOauthToken)

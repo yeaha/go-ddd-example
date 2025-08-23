@@ -1,9 +1,6 @@
 package option
 
 import (
-	"ddd-example/internal/migrate"
-	"ddd-example/pkg/database"
-	"ddd-example/pkg/oauth"
 	"errors"
 	"fmt"
 	"io"
@@ -12,17 +9,20 @@ import (
 	"reflect"
 	"time"
 
+	"ddd-example/internal/migrate"
+	"ddd-example/pkg/database"
+	"ddd-example/pkg/oauth"
+
 	"github.com/BurntSushi/toml"
 	"github.com/jmoiron/sqlx"
+	"github.com/samber/do/v2"
 
 	// database driver
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var (
-	errNotPrepare = errors.New("options not prepare")
-)
+var errNotPrepare = errors.New("options not prepare")
 
 // Options 系统配置
 type Options struct {
@@ -92,6 +92,14 @@ func (opt *Options) Prepare() error {
 	}
 
 	return nil
+}
+
+// Providers 提供依赖注入
+func (opt *Options) Providers() func(do.Injector) {
+	return do.Package(
+		do.Eager(opt),
+		do.Eager(opt.GetDB()),
+	)
 }
 
 // getMainDSN 主数据库DSN

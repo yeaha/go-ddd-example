@@ -4,25 +4,26 @@ import (
 	"context"
 	"time"
 
+	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 
 	"github.com/pmylund/go-cache"
 )
 
-// MemoryCache 本地内存缓存
-type MemoryCache struct {
+// memoryCache 本地内存缓存
+type memoryCache struct {
 	values *cache.Cache
 }
 
 // NewMemoryCache 内存缓存
-func NewMemoryCache() *MemoryCache {
-	return &MemoryCache{
+func NewMemoryCache() adapter.Cacher {
+	return &memoryCache{
 		values: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
 // Get 获取缓存结果
-func (mc *MemoryCache) Get(_ context.Context, key string) ([]byte, error) {
+func (mc *memoryCache) Get(_ context.Context, key string) ([]byte, error) {
 	if v, ok := mc.values.Get(key); ok {
 		return v.([]byte), nil
 	}
@@ -30,13 +31,13 @@ func (mc *MemoryCache) Get(_ context.Context, key string) ([]byte, error) {
 }
 
 // Put 保存缓存
-func (mc *MemoryCache) Put(_ context.Context, key string, value []byte, expiration time.Duration) error {
+func (mc *memoryCache) Put(_ context.Context, key string, value []byte, expiration time.Duration) error {
 	mc.values.Set(key, value, expiration)
 	return nil
 }
 
 // Delete 删除缓存
-func (mc *MemoryCache) Delete(_ context.Context, key string) error {
+func (mc *memoryCache) Delete(_ context.Context, key string) error {
 	mc.values.Delete(key)
 	return nil
 }

@@ -14,13 +14,13 @@ import (
 
 // AccountService 账号逻辑
 type AccountService struct {
-	Accounts adapter.AccountRepository
+	Accounts adapter.AccountRepository `do:""`
 }
 
 // NewAccountService 构造函数
 func NewAccountService(tx *sqlx.Tx) *AccountService {
 	return &AccountService{
-		Accounts: infra.NewAccountDBRepository(tx),
+		Accounts: infra.NewAccountRepositoryTx(tx),
 	}
 }
 

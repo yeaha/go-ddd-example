@@ -17,8 +17,8 @@ type LoginWithEmail struct {
 
 // LoginWithEmailHandler 使用Email登录
 type LoginWithEmailHandler struct {
-	Session  *service.SessionTokenService
-	Accounts *service.AccountService
+	Session  *service.SessionTokenService `do:""`
+	Accounts *service.AccountService      `do:""`
 }
 
 // Handle 执行
