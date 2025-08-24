@@ -2,7 +2,7 @@ package app
 
 import (
 	"ddd-example/internal/app/handler"
-	"ddd-example/internal/app/service"
+	"ddd-example/internal/app/internal/service"
 
 	"github.com/samber/do/v2"
 )

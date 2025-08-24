@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"ddd-example/internal/app/adapter"
-	"ddd-example/internal/app/service"
+	"ddd-example/internal/app/internal/service"
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/oauth"
 )

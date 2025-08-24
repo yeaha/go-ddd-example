@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"ddd-example/internal/app/service"
+	"ddd-example/internal/app/internal/service"
 	"ddd-example/internal/domain"
 )
 

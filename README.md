@@ -41,7 +41,7 @@ VSCode可以使用[test/api.http](./test/api.http)测试脚本对本地启动好
 
 表现层所有的请求都由app/handler内封装的各种handler来处理
 
-多个handler之间共用的逻辑被封装为相应的app/service，service只应该被handler调用，不应该被直接使用
+多个handler之间共用的逻辑被封装为相应的app/internal/service，service只应该被handler调用，不应该被直接使用
 
 #### [/internal/domain](./internal/domain/)
 
