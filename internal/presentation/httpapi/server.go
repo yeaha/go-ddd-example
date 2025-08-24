@@ -3,9 +3,7 @@ package httpapi
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
-	"sync"
 	"time"
 
 	"ddd-example/internal/option"
@@ -46,9 +44,7 @@ func ServerProvider(injector do.Injector) (*Server, error) {
 }
 
 // Close 关闭服务
-func (s *Server) Close(wg *sync.WaitGroup) error {
-	defer wg.Done()
-
+func (s *Server) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -61,7 +57,7 @@ func (s *Server) Close(wg *sync.WaitGroup) error {
 func (s *Server) newRouter() chi.Router {
 	router := chi.NewRouter()
 
-	router.Use(recoverer(slog.Default()))
+	router.Use(recoverer)
 
 	ac := s.auth
 	router.Use(ac.Authorize)

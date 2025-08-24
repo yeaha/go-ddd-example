@@ -2,7 +2,6 @@ package observer
 
 import (
 	"context"
-	"sync"
 
 	"ddd-example/internal/app/event"
 	"ddd-example/internal/option"
@@ -14,8 +13,6 @@ func Start(ctx context.Context, opt *option.Options) {
 }
 
 // Stop 关闭领域事件流
-func Stop(wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func Stop() {
 	event.CloseStream()
 }

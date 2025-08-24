@@ -1,9 +1,7 @@
 package httpapi
 
 import (
-	"errors"
 	"net/http"
-	"runtime"
 )
 
 var (
@@ -21,11 +19,8 @@ type apiError struct {
 	code    int
 	message string
 	status  int
-
-	cause  error
-	caller *runtime.Frame
-
-	data any
+	cause   error
+	data    any
 }
 
 func newAPIError(code int, message string, status int) apiError {
@@ -44,11 +39,6 @@ func (err apiError) Data() (any, bool) {
 	return err.data, err.data != nil
 }
 
-// WrapLine 返回调用WrapError()时的代码位置
-func (err apiError) WrapLine() (*runtime.Frame, bool) {
-	return err.caller, err.caller != nil
-}
-
 func (err apiError) StatusCode() int {
 	if v := err.status; v > 0 {
 		return v
@@ -63,7 +53,6 @@ func (err apiError) Clone() apiError {
 		message: err.message,
 		status:  err.status,
 		cause:   err.cause,
-		caller:  err.caller,
 		data:    err.data,
 	}
 }
@@ -75,7 +64,6 @@ func (err apiError) Unwrap() error {
 func (err apiError) WrapError(cause error) apiError {
 	clone := err.Clone()
 	clone.cause = cause
-	clone.caller = getCaller()
 
 	return clone
 }
@@ -85,18 +73,4 @@ func (err apiError) WithData(data any) apiError {
 	clone.data = data
 
 	return clone
-}
-
-func getCaller() *runtime.Frame {
-	pc := make([]uintptr, 2)
-	n := runtime.Callers(3, pc)
-	if n == 0 {
-		panic(errors.New("unknown caller"))
-	}
-
-	pc = pc[:n]
-	frames := runtime.CallersFrames(pc)
-
-	frame, _ := frames.Next()
-	return &frame
 }

@@ -2,10 +2,62 @@ package logger
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log/slog"
+	"log/syslog"
+	"os"
 )
 
 type loggerKey struct{}
+
+// Option is the logger option.
+type Option struct {
+	Level  string // debug, info(default), warn, error
+	Output string // stdout, stderr(default), syslog
+	Format string // text(default), json
+}
+
+// New creates a new logger.
+func New(opt Option) (*slog.Logger, error) {
+	var lvl slog.Level
+	switch opt.Level {
+	case "debug":
+		lvl = slog.LevelDebug
+	case "warn":
+		lvl = slog.LevelWarn
+	case "error":
+		lvl = slog.LevelError
+	default:
+		lvl = slog.LevelInfo
+	}
+
+	var (
+		output io.Writer
+		err    error
+	)
+	switch opt.Output {
+	case "syslog":
+		output, err = syslog.New(syslog.LOG_DEBUG, "lightshow")
+		if err != nil {
+			return nil, fmt.Errorf("create syslog writer, %w", err)
+		}
+	case "stdout":
+		output = os.Stdout
+	default:
+		output = os.Stderr
+	}
+
+	var handler slog.Handler
+	switch opt.Format {
+	case "json":
+		handler = slog.NewJSONHandler(output, &slog.HandlerOptions{Level: lvl})
+	default:
+		handler = slog.NewTextHandler(output, &slog.HandlerOptions{Level: lvl})
+	}
+
+	return slog.New(handler), nil
+}
 
 // NewContext 返回包含了slog.Logger的context
 func NewContext(ctx context.Context, l *slog.Logger) context.Context {

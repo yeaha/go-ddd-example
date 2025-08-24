@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"ddd-example/internal/app"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
+	"github.com/joyparty/gokit"
 	"github.com/samber/do/v2"
 )
 
@@ -34,7 +34,12 @@ func init() {
 	flag.StringVar(&opt.DBDir, "dbDir", "", "database dir")
 	flag.Parse()
 
-	initLogger(opt)
+	slog.SetDefault(gokit.MustReturn(
+		logger.New(logger.Option{
+			Level:  opt.LogLevel,
+			Format: "json",
+		}),
+	))
 
 	if opt.ConfigFile == "" {
 		logAndExist("need config file")
@@ -55,54 +60,21 @@ func init() {
 	)
 }
 
-func initLogger(opt *option.Options) {
-	levels := map[string]slog.Level{
-		"debug": slog.LevelDebug,
-		"info":  slog.LevelInfo,
-		"warn":  slog.LevelWarn,
-		"error": slog.LevelError,
-	}
-
-	level := slog.LevelInfo
-	if v, ok := levels[opt.LogLevel]; ok {
-		level = v
-	}
-
-	slog.SetDefault(slog.New(
-		slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: level,
-		}),
-	))
-}
-
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	server := do.MustInvoke[*httpapi.Server](injector)
-
-	// 领域事件
 	observer.Start(ctx, opt)
 
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
-
-	s := <-sc
-	logger.Debug(ctx, "receive signal", "signal", s)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(1)
-	if err := server.Close(wg); err != nil {
+	<-ctx.Done()
+	if err := server.Close(); err != nil {
 		logger.Error(ctx, "shutdown server", "error", err)
 	} else {
 		logger.Info(ctx, "shutdown server")
 	}
+	observer.Stop()
 
-	wg.Add(1)
-	observer.Stop(wg)
-
-	wg.Wait()
 	os.Exit(0)
 }
 

@@ -13,6 +13,7 @@ require (
 	github.com/jackc/pgtype v1.14.4
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joyparty/entity v0.7.3
+	github.com/joyparty/gokit v0.0.0-20250313060701-3443303e8729
 	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/pmylund/go-cache v2.1.0+incompatible
 	github.com/reactivex/rxgo/v2 v2.5.0
