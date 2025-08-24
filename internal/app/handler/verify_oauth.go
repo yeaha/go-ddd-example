@@ -15,9 +15,9 @@ import (
 // VerifyOauth 三方登录验证，参数
 type VerifyOauth struct {
 	Client      oauth.Client `json:"-"`
-	RedirectURI string       `json:"redirect_uri" valid:"url,required"`
+	RedirectURI string       `json:"redirect_uri" validate:"http_url"`
 	// 从三方验证完毕重定向回来时，附带的url query
-	RawQuery string     `json:"query" valid:",required"`
+	RawQuery string     `json:"query" validate:"required"`
 	Query    url.Values `json:"-"`
 }
 

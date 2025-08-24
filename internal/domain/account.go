@@ -5,9 +5,9 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"net/mail"
 	"strings"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/google/uuid"
 )
 
@@ -38,11 +38,13 @@ func (a *Account) SetPassword(password string) error {
 // SetEmail 设置email
 func (a *Account) SetEmail(email string) error {
 	email = NormalizeEmail(email)
-	if !govalidator.IsEmail(email) {
-		return errors.New("invalid email")
-	}
 
-	a.Email = email
+	address, err := mail.ParseAddress(email)
+	if err != nil {
+		return fmt.Errorf("parse email address, %w", err)
+	}
+	a.Email = address.Address
+
 	return nil
 }
 

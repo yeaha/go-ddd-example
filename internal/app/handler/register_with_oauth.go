@@ -18,9 +18,9 @@ import (
 
 // RegisterWithOauth 三方账号注册，参数
 type RegisterWithOauth struct {
-	OauthToken     string `json:"oauth_token" valid:",required"`
-	Email          string `json:"email" valid:"email,required"`
-	VerifyPassword string `json:"verify_password" valid:",optional"` // 绑定账号，需要提供密码
+	OauthToken     string `json:"oauth_token" validte:"required"`
+	Email          string `json:"email" validate:"email"`
+	VerifyPassword string `json:"verify_password"` // 绑定账号，需要提供密码
 }
 
 // RegisterWithOauthHandler 三方账号注册

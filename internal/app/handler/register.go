@@ -11,8 +11,8 @@ import (
 
 // Register 账号注册，参数
 type Register struct {
-	Email    string `json:"email" valid:"email,required"`
-	Password string `json:"password" valid:"required"`
+	Email    string `json:"email" validate:"email"`
+	Password string `json:"password" validate:"required"`
 }
 
 // RegisterHandler 账号注册

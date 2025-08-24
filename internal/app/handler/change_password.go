@@ -11,8 +11,8 @@ import (
 // ChangePassword 替换密码，参数
 type ChangePassword struct {
 	Account     *domain.Account `json:"-"`
-	NewPassword string          `json:"new_password" valid:",required"`
-	OldPassword string          `json:"old_password" valid:",required"`
+	NewPassword string          `json:"new_password" validate:"required"`
+	OldPassword string          `json:"old_password" validate:"required"`
 }
 
 // ChangePasswordHandler 替换密码

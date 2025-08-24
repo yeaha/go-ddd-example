@@ -11,8 +11,8 @@ import (
 
 // LoginWithEmail 使用Email登录，参数
 type LoginWithEmail struct {
-	Email    string `json:"email" valid:"email,required"`
-	Password string `json:"password" valid:",required"`
+	Email    string `json:"email" validate:"email"`
+	Password string `json:"password" validate:"required"`
 }
 
 // LoginWithEmailHandler 使用Email登录

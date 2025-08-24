@@ -177,7 +177,7 @@ func (c *authController) LoginWithOauth() http.HandlerFunc {
 		}
 
 		req := struct {
-			RedirectURI string `json:"redirect_uri" valid:"url,required"` // FIXME: 检查重定向地址域名有效性，防止钓鱼劫持
+			RedirectURI string `json:"redirect_uri" validate:"http_url"` // FIXME: 检查重定向地址域名有效性，防止钓鱼劫持
 		}{}
 		mustScanValues(&req, r.URL.Query())
 

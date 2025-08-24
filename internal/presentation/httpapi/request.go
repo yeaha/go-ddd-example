@@ -6,12 +6,17 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/schema"
 )
 
-// requestDecoder decode request values
-var requestDecoder = schema.NewDecoder()
+var (
+	requestDecoder = schema.NewDecoder()
+
+	requestValidator = validator.New(
+		validator.WithRequiredStructEnabled(),
+	)
+)
 
 func init() {
 	requestDecoder.IgnoreUnknownKeys(true)
@@ -35,10 +40,15 @@ func scanJSON(dst any, input io.Reader) error {
 		return fmt.Errorf("json decode, %w", err)
 	}
 
-	if _, err := govalidator.ValidateStruct(dst); err != nil {
-		return fmt.Errorf("validate values, %w", err)
+	if v, ok := dst.(interface {
+		Validate() error
+	}); ok {
+		if err := v.Validate(); err != nil {
+			return fmt.Errorf("validate values, %w", err)
+		}
 	}
-	return nil
+
+	return requestValidator.Struct(dst)
 }
 
 func scanValues(dst any, values url.Values) error {
@@ -46,8 +56,13 @@ func scanValues(dst any, values url.Values) error {
 		return fmt.Errorf("decode values, %w", err)
 	}
 
-	if _, err := govalidator.ValidateStruct(dst); err != nil {
-		return fmt.Errorf("validate values, %w", err)
+	if v, ok := dst.(interface {
+		Validate() error
+	}); ok {
+		if err := v.Validate(); err != nil {
+			return fmt.Errorf("validate values, %w", err)
+		}
 	}
-	return nil
+
+	return requestValidator.Struct(dst)
 }
