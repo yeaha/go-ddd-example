@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -16,20 +17,22 @@ import (
 
 // Server http服务
 type Server struct {
-	opt    *option.Options
 	server *http.Server
+
+	auth *authController
 }
 
 // ServerProvider 提供Server实例
 func ServerProvider(injector do.Injector) (*Server, error) {
-	opt := do.MustInvoke[*option.Options](injector)
-
 	s := &Server{
-		opt: opt,
-		server: &http.Server{
-			Addr:    fmt.Sprintf(":%d", opt.HTTP.Port),
-			Handler: do.MustInvoke[chi.Router](injector),
-		},
+		auth: do.MustInvoke[*authController](injector),
+	}
+
+	opt := do.MustInvoke[*option.Options](injector)
+	router := s.newRouter()
+	s.server = &http.Server{
+		Addr:    fmt.Sprintf(":%d", opt.HTTP.Port),
+		Handler: router,
 	}
 
 	go func() {
@@ -53,4 +56,29 @@ func (s *Server) Close(wg *sync.WaitGroup) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Server) newRouter() chi.Router {
+	router := chi.NewRouter()
+
+	router.Use(recoverer(slog.Default()))
+
+	ac := s.auth
+	router.Use(ac.Authorize)
+
+	router.Post(`/session`, ac.LoginWithEmail())
+	router.Post(`/register`, ac.Register())
+	router.Delete(`/session`, ac.Logout())
+	router.Get(`/login/oauth/{site}`, ac.LoginWithOauth())
+	router.Post(`/login/oauth/{site}`, ac.VerifyOauth())
+	router.Post(`/register/oauth`, ac.RegisterWithOauth())
+
+	router.Group(func(router chi.Router) {
+		router.Use(ac.DenyAnonymous)
+
+		router.Get(`/session`, ac.MyIdentity())
+		router.Put(`/my/password`, ac.ChangePassword())
+	})
+
+	return router
 }

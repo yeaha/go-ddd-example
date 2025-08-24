@@ -6,6 +6,5 @@ import "github.com/samber/do/v2"
 var Providers = do.Package(
 	do.Lazy(do.InvokeStruct[*authController]),
 
-	do.Lazy(routerProvider),
 	do.Lazy(ServerProvider),
 )
