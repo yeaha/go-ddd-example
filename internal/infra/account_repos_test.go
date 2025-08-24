@@ -4,6 +4,7 @@
 package infra
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -17,15 +18,18 @@ import (
 )
 
 func TestAccountRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) error {
+	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) (err error) {
+		defer func() {
+			err = cmp.Or(err, errRollbackTest)
+		}()
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		email := "test@test.com"
-
 		repos := newAccountDBRepository(tx)
 
-		table := testTable{
+		return testTable{
 			{
 				Name: "Create",
 				Func: func() error {
@@ -54,13 +58,7 @@ func TestAccountRepository(t *testing.T) {
 					return err
 				},
 			},
-		}
-
-		if err := table.Execute(); err != nil {
-			return err
-		}
-
-		return errRollbackTest
+		}.Execute()
 	}); !errors.Is(err, errRollbackTest) {
 		t.Fatalf("account repository, %v", err)
 	}

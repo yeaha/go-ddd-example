@@ -15,8 +15,6 @@ import (
 	"ddd-example/internal/presentation/observer"
 	"ddd-example/pkg/logger"
 
-	"github.com/joyparty/entity"
-	"github.com/joyparty/entity/cache"
 	"github.com/joyparty/gokit"
 	"github.com/samber/do/v2"
 )
@@ -48,9 +46,6 @@ func init() {
 	} else if err := opt.Prepare(); err != nil {
 		logAndExist("prepare resources", "error", err)
 	}
-
-	// 实体对象，默认使用本地内存缓存
-	entity.DefaultCacher = cache.NewMemoryCache()
 
 	injector = do.New(
 		opt.Providers(),

@@ -2,10 +2,16 @@ package infra
 
 import (
 	"github.com/doug-martin/goqu/v9"
+	"github.com/joyparty/entity"
+	"github.com/joyparty/entity/cache"
 
 	// sql dialect
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 )
+
+func init() {
+	entity.DefaultCacher = cache.NewMemoryCache()
+}
 
 var (
 	sqlite = goqu.Dialect("sqlite3")

@@ -4,6 +4,7 @@
 package infra
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -18,7 +19,11 @@ import (
 )
 
 func TestOauthDBRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) error {
+	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) (err error) {
+		defer func() {
+			err = cmp.Or(err, errRollbackTest)
+		}()
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
@@ -30,7 +35,7 @@ func TestOauthDBRepository(t *testing.T) {
 
 		repos := NewOauthRepositoryTx(tx)
 
-		table := testTable{
+		return testTable{
 			{
 				Name: "Bind",
 				Func: func() error {
@@ -55,13 +60,7 @@ func TestOauthDBRepository(t *testing.T) {
 					return nil
 				},
 			},
-		}
-
-		if err := table.Execute(); err != nil {
-			return err
-		}
-
-		return errRollbackTest
+		}.Execute()
 	}); !errors.Is(err, errRollbackTest) {
 		t.Fatalf("oauth repository, %v", err)
 	}

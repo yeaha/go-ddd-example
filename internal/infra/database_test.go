@@ -56,12 +56,12 @@ func dbMigrate(source fs.FS, dir string, db *sqlx.DB) error {
 	})
 }
 
-type testFunc struct {
+type testTask struct {
 	Name string
 	Func func() error
 }
 
-type testTable []testFunc
+type testTable []testTask
 
 func (r testTable) Execute() error {
 	for _, fn := range r {
