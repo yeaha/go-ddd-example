@@ -36,13 +36,13 @@ var (
 	colVendorUID = goqu.C("vendor_uid")
 )
 
-type baseEntity struct {
+type baseRow struct {
 	ID       pgtype.UUID `db:"id,primaryKey"`
 	CreateAt int64       `db:"create_at,refuseUpdate"`
 	UpdateAt int64       `db:"update_at"`
 }
 
-func (base *baseEntity) BeforeInsert(_ context.Context) error {
+func (base *baseRow) BeforeInsert(_ context.Context) error {
 	if base.ID.Status != pgtype.Present {
 		if id, err := uuid.NewV7(); err != nil {
 			return fmt.Errorf("create id, %w", err)
@@ -58,16 +58,16 @@ func (base *baseEntity) BeforeInsert(_ context.Context) error {
 	return nil
 }
 
-func (base *baseEntity) BeforeUpdate(_ context.Context) error {
+func (base *baseRow) BeforeUpdate(_ context.Context) error {
 	base.UpdateAt = time.Now().Unix()
 
 	return nil
 }
 
-func (base *baseEntity) GetID() uuid.UUID {
+func (base *baseRow) GetID() uuid.UUID {
 	return base.ID.Bytes
 }
 
-func (base *baseEntity) SetID(id uuid.UUID) error {
+func (base *baseRow) SetID(id uuid.UUID) error {
 	return database.SetUUID(&base.ID, id)
 }

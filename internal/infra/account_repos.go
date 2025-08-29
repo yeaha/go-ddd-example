@@ -81,7 +81,7 @@ func (r *accountDBRepository) Update(ctx context.Context, account *domain.Accoun
 }
 
 type accountRow struct {
-	baseEntity
+	baseRow
 
 	Email    pgtype.Text `db:"email"`
 	Password pgtype.Text `db:"password"`
