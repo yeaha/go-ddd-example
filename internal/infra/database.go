@@ -1,7 +1,15 @@
 package infra
 
 import (
+	"context"
+	"fmt"
+	"time"
+
+	"ddd-example/pkg/database"
+
 	"github.com/doug-martin/goqu/v9"
+	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
 
@@ -27,3 +35,39 @@ var (
 	colVendor    = goqu.C("vendor")
 	colVendorUID = goqu.C("vendor_uid")
 )
+
+type baseEntity struct {
+	ID       pgtype.UUID `db:"id,primaryKey"`
+	CreateAt int64       `db:"create_at,refuseUpdate"`
+	UpdateAt int64       `db:"update_at"`
+}
+
+func (base *baseEntity) BeforeInsert(_ context.Context) error {
+	if base.ID.Status != pgtype.Present {
+		if id, err := uuid.NewV7(); err != nil {
+			return fmt.Errorf("create id, %w", err)
+		} else if err := database.SetUUID(&base.ID, id); err != nil {
+			return fmt.Errorf("set id, %w", err)
+		}
+	}
+
+	now := time.Now().Unix()
+	base.CreateAt = now
+	base.UpdateAt = now
+
+	return nil
+}
+
+func (base *baseEntity) BeforeUpdate(_ context.Context) error {
+	base.UpdateAt = time.Now().Unix()
+
+	return nil
+}
+
+func (base *baseEntity) GetID() uuid.UUID {
+	return base.ID.Bytes
+}
+
+func (base *baseEntity) SetID(id uuid.UUID) error {
+	return database.SetUUID(&base.ID, id)
+}

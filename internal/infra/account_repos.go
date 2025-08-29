@@ -81,12 +81,11 @@ func (r *accountDBRepository) Update(ctx context.Context, account *domain.Accoun
 }
 
 type accountRow struct {
-	ID       pgtype.UUID    `db:"id,primaryKey"`
-	Email    pgtype.Varchar `db:"email"`
-	Password pgtype.Varchar `db:"password"`
-	Setting  pgtype.JSON    `db:"setting"`
-	CreateAt int64          `db:"create_at,refuseUpdate"`
-	UpdateAt int64          `db:"update_at"`
+	baseEntity
+
+	Email    pgtype.Text `db:"email"`
+	Password pgtype.Text `db:"password"`
+	Setting  pgtype.JSON `db:"setting"`
 }
 
 type accountRowSetting struct {
@@ -98,56 +97,27 @@ func (row accountRow) TableName() string {
 	return "accounts"
 }
 
-func (row *accountRow) BeforeInsert(_ context.Context) error {
-	if row.ID.Status != pgtype.Present {
-		if err := database.SetUUID(&row.ID, uuid.Must(uuid.NewV7())); err != nil {
-			return fmt.Errorf("set id, %w", err)
-		}
-	}
-
-	now := time.Now().Unix()
-	row.CreateAt = now
-	row.UpdateAt = now
-	return nil
-}
-
-func (row *accountRow) BeforeUpdate(_ context.Context) error {
-	row.UpdateAt = time.Now().Unix()
-	return nil
-}
-
 func (row accountRow) CacheOption() entity.CacheOption {
 	return entity.CacheOption{
-		Key:        fmt.Sprintf("account:%s", uuid.UUID(row.ID.Bytes)),
+		Key:        fmt.Sprintf("account:%s", row.GetID()),
 		Expiration: 5 * time.Minute,
 	}
 }
 
-func (row *accountRow) GetID() uuid.UUID {
-	return row.ID.Bytes
-}
-
-func (row *accountRow) SetID(id uuid.UUID) error {
-	return database.SetUUID(&row.ID, id)
-}
-
-func (row *accountRow) Set(_ context.Context, u *domain.Account) error {
-	if err := database.SetUUID(&row.ID, u.ID); err != nil {
-		return fmt.Errorf("set id, %w", err)
-	} else if err := database.SetVarchar(&row.Email, u.Email); err != nil {
-		return fmt.Errorf("set email, %w", err)
-	} else if err := database.SetVarchar(&row.Password, u.Password); err != nil {
-		return fmt.Errorf("set password, %w", err)
-	}
-
+func (row *accountRow) Set(_ context.Context, a *domain.Account) error {
 	setting := accountRowSetting{
-		PasswordSalt: u.PasswordSalt,
-		SessionSalt:  u.SessionSalt,
+		PasswordSalt: a.PasswordSalt,
+		SessionSalt:  a.SessionSalt,
 	}
 	if err := row.Setting.Set(setting); err != nil {
 		return fmt.Errorf("set setting, %w", err)
 	}
-	return nil
+
+	return errors.Join(
+		row.SetID(a.ID),
+		database.SetText(&row.Email, a.Email),
+		database.SetText(&row.Password, a.Password),
+	)
 }
 
 func (row accountRow) ToDomainObject() (*domain.Account, error) {
