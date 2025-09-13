@@ -3,18 +3,17 @@ package infra
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"ddd-example/pkg/database"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/joyparty/entity"
 	"github.com/joyparty/entity/cache"
-
-	// sql dialect
-	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 )
 
 func init() {
@@ -22,13 +21,13 @@ func init() {
 }
 
 var (
-	sqlite = goqu.Dialect("sqlite3")
+	sqlite = sync.OnceValue(sqliteDialect)
 
 	tableAccounts  = goqu.T((accountRow{}).TableName())
-	selectAccounts = sqlite.From(tableAccounts).Prepared(true)
+	selectAccounts = sqlite().From(tableAccounts).Prepared(true)
 
 	tableOauth  = goqu.T((oauthRow{}).TableName())
-	selectOauth = sqlite.From(tableOauth).Prepared(true)
+	selectOauth = sqlite().From(tableOauth).Prepared(true)
 
 	colAccountID = goqu.C("account_id")
 	colEmail     = goqu.C("email")
@@ -70,4 +69,15 @@ func (base *baseRow) GetID() uuid.UUID {
 
 func (base *baseRow) SetID(id uuid.UUID) error {
 	return database.SetUUID(&base.ID, id)
+}
+
+func sqliteDialect() goqu.DialectWrapper {
+	sqliteOptions := sqlite3.DialectOptions()
+	sqliteOptions.SupportsConflictUpdateWhere = true
+	sqliteOptions.SupportsInsertIgnoreSyntax = false
+	sqliteOptions.SupportsReturn = true
+	sqliteOptions.SupportsWindowFunction = true
+
+	goqu.RegisterDialect("sqlite3", sqliteOptions)
+	return goqu.Dialect("sqlite3")
 }
