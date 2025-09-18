@@ -14,12 +14,11 @@ import (
 	"ddd-example/internal/domain"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 )
 
 func TestOauthDBRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) (err error) {
+	if err := entity.Transaction(testDB, func(db entity.DB) (err error) {
 		defer func() {
 			err = cmp.Or(err, errRollbackTest)
 		}()
@@ -33,7 +32,7 @@ func TestOauthDBRepository(t *testing.T) {
 			vendorUID = uuid.New().String()
 		)
 
-		repos := NewOauthRepositoryTx(tx)
+		repos := NewOauthRepository(db)
 
 		return testTable{
 			{

@@ -13,12 +13,11 @@ import (
 
 	"ddd-example/internal/domain"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 )
 
 func TestAccountRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(tx *sqlx.Tx) (err error) {
+	if err := entity.Transaction(testDB, func(tx entity.DB) (err error) {
 		defer func() {
 			err = cmp.Or(err, errRollbackTest)
 		}()

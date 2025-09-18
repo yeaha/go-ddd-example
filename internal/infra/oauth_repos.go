@@ -30,9 +30,9 @@ func OauthRepositoryProvider(injector do.Injector) (adapter.OauthRepository, err
 	}, nil
 }
 
-// NewOauthRepositoryTx returns oauth repository with transaction.
-func NewOauthRepositoryTx(tx *sqlx.Tx) adapter.OauthRepository {
-	return &oauthDBRepository{db: tx}
+// NewOauthRepository returns oauth repository.
+func NewOauthRepository(db entity.DB) adapter.OauthRepository {
+	return &oauthDBRepository{db: db}
 }
 
 // Find 查询关联用户ID

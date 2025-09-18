@@ -9,7 +9,7 @@ import (
 	"ddd-example/internal/domain"
 	"ddd-example/internal/infra"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/joyparty/entity"
 )
 
 // AccountService 账号逻辑
@@ -18,9 +18,9 @@ type AccountService struct {
 }
 
 // NewAccountService 构造函数
-func NewAccountService(tx *sqlx.Tx) *AccountService {
+func NewAccountService(db entity.DB) *AccountService {
 	return &AccountService{
-		Accounts: infra.NewAccountRepositoryTx(tx),
+		Accounts: infra.NewAccountRepository(db),
 	}
 }
 

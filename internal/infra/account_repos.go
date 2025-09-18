@@ -29,9 +29,9 @@ func AccountRepositoryProvider(injector do.Injector) (adapter.AccountRepository,
 	return newAccountDBRepository(do.MustInvoke[*sqlx.DB](injector)), nil
 }
 
-// NewAccountRepositoryTx returns a new AccountDBRepository with a transaction.
-func NewAccountRepositoryTx(tx *sqlx.Tx) adapter.AccountRepository {
-	return newAccountDBRepository(tx)
+// NewAccountRepository returns a new AccountDBRepository.
+func NewAccountRepository(db entity.DB) adapter.AccountRepository {
+	return newAccountDBRepository(db)
 }
 
 func newAccountDBRepository(db entity.DB) *accountDBRepository {

@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/schema v1.4.1
 	github.com/jackc/pgtype v1.14.4
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/joyparty/entity v0.7.3
+	github.com/joyparty/entity v0.8.0
 	github.com/joyparty/gokit v0.0.0-20250313060701-3443303e8729
 	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/pmylund/go-cache v2.1.0+incompatible
@@ -30,13 +30,13 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/redis/go-redis/v9 v9.14.0 // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/teivah/onecontext v1.3.0 // indirect
