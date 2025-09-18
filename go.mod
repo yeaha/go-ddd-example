@@ -15,7 +15,7 @@ require (
 	github.com/joyparty/entity v0.8.0
 	github.com/joyparty/gokit v0.0.0-20250313060701-3443303e8729
 	github.com/mattn/go-sqlite3 v1.14.30
-	github.com/pmylund/go-cache v2.1.0+incompatible
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/reactivex/rxgo/v2 v2.5.0
 	github.com/samber/do/v2 v2.0.0-rc1
 	github.com/stretchr/testify v1.10.0
@@ -34,7 +34,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.14.0 // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect

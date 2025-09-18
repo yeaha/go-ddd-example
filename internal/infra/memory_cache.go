@@ -7,7 +7,7 @@ import (
 	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 
-	"github.com/pmylund/go-cache"
+	"github.com/patrickmn/go-cache"
 )
 
 // memoryCache 本地内存缓存
