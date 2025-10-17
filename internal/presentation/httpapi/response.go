@@ -63,8 +63,8 @@ func sendResponse(w http.ResponseWriter, options ...apiResponseOption) {
 		response.Data = struct{}{}
 	}
 
-	w.WriteHeader(response.StatusCode())
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode())
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		logger.Error(context.Background(), "send response", "error", err)
