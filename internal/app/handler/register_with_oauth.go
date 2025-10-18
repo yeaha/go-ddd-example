@@ -39,7 +39,7 @@ func (h *RegisterWithOauthHandler) Handle(ctx context.Context, args RegisterWith
 	}
 
 	var events []any
-	if err = entity.Transaction(h.DB, func(db entity.DB) error {
+	if err = entity.TransactionX(ctx, h.DB, func(db entity.DB) error {
 		account, events, err = h.handle(
 			ctx, args, vendorUser,
 			service.NewAccountService(db),

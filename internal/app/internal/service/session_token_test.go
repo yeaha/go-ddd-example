@@ -6,7 +6,6 @@ import (
 	"ddd-example/internal/domain"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSessionTokenService(t *testing.T) {
@@ -18,12 +17,18 @@ func TestSessionTokenService(t *testing.T) {
 
 	service := SessionTokenService{}
 	payload := service.encode(token, account.SessionSalt)
-	require.NotEmpty(t, payload)
+	if payload == "" {
+		t.Fatal("payload should not be empty")
+	}
 
 	decoded, err := service.decode(payload)
-	require.NoError(t, err)
-
-	require.Equal(t, token, decoded)
-	require.Equal(t, service.encode(decoded, account.SessionSalt), payload)
-	require.NotEqual(t, service.encode(decoded, "abcfaof"), payload)
+	if err != nil {
+		t.Fatal(err)
+	} else if decoded != token {
+		t.Fatalf("decoded token should be equal to token")
+	} else if v := service.encode(decoded, account.SessionSalt); v != payload {
+		t.Fatalf("encoded token should be equal to payload")
+	} else if v := service.encode(decoded, "abcfaof"); v == payload {
+		t.Fatalf("encoded token should not be equal to payload")
+	}
 }
