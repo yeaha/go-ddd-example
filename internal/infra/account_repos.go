@@ -11,11 +11,20 @@ import (
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	"github.com/samber/do/v2"
+)
+
+var (
+	tableAccounts  = goqu.T((accountRow{}).TableName())
+	selectAccounts = sqlite().From(tableAccounts).Prepared(true)
+
+	colAccountID = goqu.C("account_id")
+	colEmail     = goqu.C("email")
 )
 
 // accountDBRepository 用户账号，数据库存储

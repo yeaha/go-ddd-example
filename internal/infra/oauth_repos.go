@@ -11,11 +11,20 @@ import (
 	"ddd-example/internal/domain"
 	"ddd-example/pkg/database"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/jmoiron/sqlx"
 	"github.com/joyparty/entity"
 	"github.com/samber/do/v2"
+)
+
+var (
+	tableOauth  = goqu.T((oauthRow{}).TableName())
+	selectOauth = sqlite().From(tableOauth).Prepared(true)
+
+	colVendor    = goqu.C("vendor")
+	colVendorUID = goqu.C("vendor_uid")
 )
 
 // oauthDBRepository 三方账号，数据库存储
