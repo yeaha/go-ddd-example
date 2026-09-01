@@ -1,3 +1,5 @@
+-- +goose Up
+
 create table if not exists oauth_accounts (
 	account_id character(36),
 	vendor varchar(64) not null,

@@ -3,10 +3,9 @@
 package infra
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"io/fs"
-	"strings"
 
 	"ddd-example/internal/migrate"
 	"ddd-example/pkg/database"
@@ -34,26 +33,12 @@ func init() {
 	})
 	if err != nil {
 		panic(fmt.Errorf("connect test main db, %w", err))
-	} else if err := dbMigrate(migrate.FS, "scripts", db); err != nil {
+	}
+
+	if err := migrate.Execute(context.Background(), db.DB, migrate.FS, "scripts"); err != nil {
 		panic(fmt.Errorf("migrate test main db, %w", err))
 	}
 	testDB = db
-}
-
-func dbMigrate(source fs.FS, dir string, db *sqlx.DB) error {
-	return fs.WalkDir(source, dir, func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() && strings.HasSuffix(d.Name(), ".up.sql") {
-			content, err := migrate.FS.ReadFile(path)
-			if err != nil {
-				return fmt.Errorf("read migrate file, %w", err)
-			}
-
-			if _, err := db.Exec(string(content)); err != nil {
-				return fmt.Errorf("exec migrate file, %s, %w", path, err)
-			}
-		}
-		return nil
-	})
 }
 
 type testTask struct {

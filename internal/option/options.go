@@ -1,6 +1,7 @@
 package option
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -18,7 +19,6 @@ import (
 	"github.com/samber/do/v2"
 
 	// database driver
-	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -63,14 +63,6 @@ func (opt *Options) Prepare() error {
 		return errors.New("need database dir")
 	}
 
-	if err := migrate.Execute(
-		migrate.FS,
-		"scripts",
-		fmt.Sprintf("sqlite3://%s", opt.getDBDSN()),
-	); err != nil {
-		return fmt.Errorf("database migrate, %w", err)
-	}
-
 	db, err := database.NewDB(database.Option{
 		Driver:       "sqlite3",
 		DSN:          opt.getDBDSN(),
@@ -79,6 +71,10 @@ func (opt *Options) Prepare() error {
 	})
 	if err != nil {
 		return fmt.Errorf("connect database, %w", err)
+	}
+
+	if err := migrate.Execute(context.Background(), db.DB, migrate.FS, "scripts"); err != nil {
+		return fmt.Errorf("database migrate, %w", err)
 	}
 	opt.clients.database = db.Unsafe()
 

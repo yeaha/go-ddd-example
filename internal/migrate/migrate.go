@@ -1,15 +1,13 @@
 package migrate
 
 import (
+	"context"
+	"database/sql"
 	"embed"
-	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/pressly/goose/v3"
 )
 
 // FS 数据库迁移文件
@@ -18,23 +16,19 @@ import (
 var FS embed.FS
 
 // Execute 执行数据库升级
-func Execute(dir fs.FS, path string, dsn string) error {
-	drv, err := iofs.New(dir, path)
+func Execute(ctx context.Context, db *sql.DB, dir fs.FS, path string) error {
+	sub, err := fs.Sub(dir, path)
 	if err != nil {
 		return fmt.Errorf("read dir, %w", err)
 	}
 
-	m, err := migrate.NewWithSourceInstance("iofs", drv, dsn)
+	provider, err := goose.NewProvider(goose.DialectSQLite3, db, sub)
 	if err != nil {
-		return fmt.Errorf("new migrate, %w", err)
+		return fmt.Errorf("new provider, %w", err)
 	}
-	defer m.Close()
 
-	if err := m.Up(); err != nil &&
-		!errors.Is(err, migrate.ErrNoChange) &&
-		!errors.Is(err, database.ErrLocked) &&
-		!errors.Is(err, os.ErrNotExist) {
-		return err
+	if _, err := provider.Up(ctx); err != nil {
+		return fmt.Errorf("database migrate, %w", err)
 	}
 	return nil
 }

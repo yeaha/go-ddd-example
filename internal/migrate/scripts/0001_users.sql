@@ -1,3 +1,5 @@
+-- +goose Up
+
 create table if not exists accounts (
 	id character(36) primary key,
 	email varchar(255) not null,
