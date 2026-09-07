@@ -46,12 +46,13 @@ func TestCheckHandlerParameters(t *testing.T) {
 	}{
 		{"ok - no args", func(context.Context) error { return nil }, ""},
 		{"ok - pointer args", func(context.Context, *testArgs) error { return nil }, ""},
+		{"ok - struct args", func(context.Context, testArgs) error { return nil }, ""},
 		{"ok - multi outputs", func(context.Context, *testArgs) (int, string, error) { return 0, "", nil }, ""},
 		{"bad - no inputs", func() error { return nil }, "handler should accept 1 or 2 inputs"},
 		{"bad - too many inputs", func(context.Context, *testArgs, *testArgs) error { return nil }, "handler should accept 1 or 2 inputs"},
 		{"bad - no outputs", func(context.Context, *testArgs) {}, "handler should have at least 1 output"},
 		{"bad - first input not context", func(*testArgs) error { return nil }, "first handler input should be context.Context"},
-		{"bad - second input not pointer", func(context.Context, testArgs) error { return nil }, "second handler input should be a pointer"},
+		{"bad - second input not struct", func(context.Context, int) error { return nil }, "second handler input should be a struct or struct pointer"},
 		{"bad - last output not error", func(context.Context) string { return "" }, "last handler output should be error"},
 	}
 
@@ -201,10 +202,10 @@ func TestNewHandlerConstruction(t *testing.T) {
 			wantErr:    "render should accept at least 2 inputs",
 		},
 		{
-			name:       "bad - 2 inputs, second not pointer",
-			appHandler: func(context.Context, testArgs) error { return nil },
+			name:       "bad - 2 inputs, second not struct",
+			appHandler: func(context.Context, int) error { return nil },
 			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "second handler input should be a pointer",
+			wantErr:    "second handler input should be a struct or struct pointer",
 		},
 		{
 			name:       "bad - 3 inputs",
@@ -248,6 +249,70 @@ func TestMustNewHandler(t *testing.T) {
 	}()
 
 	MustNewHandler("not a function", func(http.ResponseWriter, *http.Request) error { return nil })
+}
+
+func TestMustNewVoidHandler(t *testing.T) {
+	handler := MustNewVoidHandler(func(context.Context, *testArgs) error { return nil })
+	if handler == nil {
+		t.Fatal("handler should not be nil")
+	}
+}
+
+func TestNewVoidHandler(t *testing.T) {
+	sentinelErr := errors.New("sentinel")
+
+	t.Run("ok - pointer args", func(t *testing.T) {
+		var gotPage int
+		handler := MustNewVoidHandler(func(ctx context.Context, args *testArgs) error {
+			gotPage = args.Page
+			return nil
+		})
+
+		w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 3}`, "application/json")
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status should be 200, got %d", w.Code)
+		} else if w.Body.Len() > 0 {
+			t.Fatalf("body should be empty, got %q", w.Body.String())
+		} else if gotPage != 3 {
+			t.Fatalf("args should be parsed page 3, got %d", gotPage)
+		}
+	})
+
+	t.Run("ok - struct args", func(t *testing.T) {
+		var gotPage int
+		handler := MustNewVoidHandler(func(ctx context.Context, args testArgs) error {
+			gotPage = args.Page
+			return nil
+		})
+
+		w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 7}`, "application/json")
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status should be 200, got %d", w.Code)
+		} else if w.Body.Len() > 0 {
+			t.Fatalf("body should be empty, got %q", w.Body.String())
+		} else if gotPage != 7 {
+			t.Fatalf("args should be parsed page 7, got %d", gotPage)
+		}
+	})
+
+	t.Run("bad - handler error responds 500", func(t *testing.T) {
+		handler := MustNewVoidHandler(func(ctx context.Context, args *testArgs) error {
+			return sentinelErr
+		})
+
+		w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 1}`, "application/json")
+
+		if w.Code != http.StatusInternalServerError {
+			t.Fatalf("status should be 500, got %d", w.Code)
+		}
+
+		v := parseResp(t, w)
+		if v.Errno != 50000 {
+			t.Fatalf("errno should be 50000, got %d", v.Errno)
+		}
+	})
 }
 
 func TestNewHandlerServeParams(t *testing.T) {
@@ -302,6 +367,26 @@ func TestNewHandlerServeParams(t *testing.T) {
 			t.Fatalf("status should be 200, got %d", w.Code)
 		} else if m, _ := v.Data.(map[string]any); m["page"] != float64(0) {
 			t.Fatalf("data should echo page 0, got %+v", v.Data)
+		}
+	})
+
+	t.Run("ok - handler second input is request args struct", func(t *testing.T) {
+		handler := MustNewHandler(
+			func(ctx context.Context, args testArgs) (int, error) {
+				return args.Page, nil
+			},
+			func(w http.ResponseWriter, r *http.Request, page int) (any, error) {
+				return mapAny{"page": page}, nil
+			},
+		)
+
+		w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 3}`, "application/json")
+		v := parseResp(t, w)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status should be 200, got %d", w.Code)
+		} else if m, _ := v.Data.(map[string]any); m["page"] != float64(3) {
+			t.Fatalf("data should echo page 3, got %+v", v.Data)
 		}
 	})
 

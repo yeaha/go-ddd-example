@@ -146,11 +146,21 @@ func NewHandler(appHandler any, render any) (http.Handler, error) {
 		}
 
 		if len(handlerFactor.ins) > 1 {
-			handlerArgs := reflect.New(handlerFactor.ins[1].Elem())
+			argT := handlerFactor.ins[1]
+			isPtr := argT.Kind() == reflect.Pointer
 
+			if isPtr {
+				argT = argT.Elem()
+			}
+
+			handlerArgs := reflect.New(argT)
 			if err := scanRequest(handlerArgs.Interface(), r); err != nil {
 				sendResponse(w, withError(errBadRequest.WrapError(err)))
 				return
+			}
+
+			if !isPtr {
+				handlerArgs = handlerArgs.Elem()
 			}
 
 			handlerIns = append(handlerIns, handlerArgs)
@@ -202,6 +212,22 @@ func MustNewHandler(appHandler any, render any) http.Handler {
 	return handler
 }
 
+// NewVoidHandler 对不返回数据的app handler进行默认转换
+func NewVoidHandler[T any](appHandler func(context.Context, T) error) (http.Handler, error) {
+	return NewHandler(appHandler, func(http.ResponseWriter, *http.Request) error {
+		return nil
+	})
+}
+
+// MustNewVoidHandler 对不返回数据的app handler进行默认转换，转换失败则panic
+func MustNewVoidHandler[T any](appHandler func(context.Context, T) error) http.Handler {
+	handler, err := NewVoidHandler(appHandler)
+	if err != nil {
+		panic(err)
+	}
+	return handler
+}
+
 type funcFactor struct {
 	v    reflect.Value
 	ins  []reflect.Type
@@ -235,7 +261,7 @@ var (
 // 检查handler参数
 //   - 入参数量为1至2个
 //   - 第一个入参必须是context.Context
-//   - 如果有第二个入参，必须是指针类型
+//   - 如果有第二个入参，必须是struct或struct指针类型
 //   - 出参数量为1至2个
 //   - 最后一个出参必须是error类型
 func checkHandlerParameters(handler *funcFactor) error {
@@ -247,8 +273,14 @@ func checkHandlerParameters(handler *funcFactor) error {
 
 	if !handler.ins[0].AssignableTo(contextT) {
 		return errors.New("first handler input should be context.Context")
-	} else if len(handler.ins) == 2 && handler.ins[1].Kind() != reflect.Pointer {
-		return errors.New("second handler input should be a pointer")
+	} else if len(handler.ins) == 2 {
+		argT := handler.ins[1]
+		if argT.Kind() == reflect.Pointer {
+			argT = argT.Elem()
+		}
+		if argT.Kind() != reflect.Struct {
+			return errors.New("second handler input should be a struct or struct pointer")
+		}
 	}
 
 	if !handler.outs[len(handler.outs)-1].AssignableTo(errorT) {
