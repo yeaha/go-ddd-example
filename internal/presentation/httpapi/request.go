@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -63,7 +64,15 @@ func mustScanValues(dst any, values url.Values) {
 	}
 }
 
+type initializer interface {
+	InitContext(context.Context)
+}
+
 func scanRequest(payload any, r *http.Request) error {
+	if v, ok := payload.(initializer); ok {
+		v.InitContext(r.Context())
+	}
+
 	switch r.Method {
 	default:
 		return fmt.Errorf("unsupported http method %s", r.Method)
