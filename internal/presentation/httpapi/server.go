@@ -121,7 +121,7 @@ func (s *Server) newRouter() chi.Router {
 //	  // render可以不返回任何数据，这样服务器端会响应空消息
 //	  func(http.ResponseWriter, *http.Request, int, string) error,
 //	)
-func NewHandler(appHandler any, render any) (http.Handler, error) {
+func NewHandler(appHandler any, render any) (http.HandlerFunc, error) {
 	handlerFactor, err := newFuncFactor(appHandler)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func NewHandler(appHandler any, render any) (http.Handler, error) {
 }
 
 // MustNewHandler 把appHandler转换为http.Handler，转换失败则panic
-func MustNewHandler(appHandler any, render any) http.Handler {
+func MustNewHandler(appHandler any, render any) http.HandlerFunc {
 	handler, err := NewHandler(appHandler, render)
 	if err != nil {
 		panic(err)
@@ -213,14 +213,14 @@ func MustNewHandler(appHandler any, render any) http.Handler {
 }
 
 // NewVoidHandler 对不返回数据的app handler进行默认转换
-func NewVoidHandler[T any](appHandler func(context.Context, T) error) (http.Handler, error) {
+func NewVoidHandler[T any](appHandler func(context.Context, T) error) (http.HandlerFunc, error) {
 	return NewHandler(appHandler, func(http.ResponseWriter, *http.Request) error {
 		return nil
 	})
 }
 
 // MustNewVoidHandler 对不返回数据的app handler进行默认转换，转换失败则panic
-func MustNewVoidHandler[T any](appHandler func(context.Context, T) error) http.Handler {
+func MustNewVoidHandler[T any](appHandler func(context.Context, T) error) http.HandlerFunc {
 	handler, err := NewVoidHandler(appHandler)
 	if err != nil {
 		panic(err)
