@@ -2,9 +2,10 @@ package httpapi
 
 import (
 	"context"
-	"ddd-example/pkg/logger"
 	"encoding/json"
 	"net/http"
+
+	"ddd-example/pkg/logger"
 )
 
 type mapAny map[string]any
@@ -51,6 +52,8 @@ func withStatusCode(code int) apiResponseOption {
 		ar.statusCode = code
 	}
 }
+
+type apiResponseOptions []apiResponseOption
 
 func sendResponse(w http.ResponseWriter, options ...apiResponseOption) {
 	response := &apiResponse{}

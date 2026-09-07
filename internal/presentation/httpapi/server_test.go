@@ -15,6 +15,9 @@ type testArgs struct {
 	Page int `json:"page"`
 }
 
+// noopRender 什么都不做的render，用于只关心handler行为的测试
+var noopRender = func(http.ResponseWriter, *http.Request) error { return nil }
+
 func factor(t *testing.T, fn any) *funcFactor {
 	t.Helper()
 
@@ -73,7 +76,7 @@ func TestCheckRenderParameters(t *testing.T) {
 		{
 			"ok - error only",
 			func(context.Context) error { return nil },
-			func(http.ResponseWriter, *http.Request) error { return nil },
+			noopRender,
 			"",
 		},
 		{
@@ -115,7 +118,7 @@ func TestCheckRenderParameters(t *testing.T) {
 		{
 			"bad - missing inputs",
 			func(context.Context) (string, error) { return "", nil },
-			func(http.ResponseWriter, *http.Request) error { return nil },
+			noopRender,
 			"render inputs do not match handler outputs",
 		},
 		{
@@ -154,76 +157,21 @@ func TestNewHandlerConstruction(t *testing.T) {
 		wantErr    string
 	}{
 		{
-			name:       "ok - 2 inputs",
+			name:       "ok - handler and render accepted",
 			appHandler: func(context.Context, *testArgs) error { return nil },
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "",
-		},
-		{
-			name:       "ok - data out, render without error",
-			appHandler: func(context.Context) (string, error) { return "", nil },
-			render:     func(http.ResponseWriter, *http.Request, string) error { return nil },
-			wantErr:    "",
-		},
-		{
-			name:       "ok - pass error to render",
-			appHandler: func(context.Context) error { return nil },
-			render:     func(http.ResponseWriter, *http.Request, error) error { return nil },
-			wantErr:    "",
-		},
-		{
-			name:       "ok - render returns data",
-			appHandler: func(context.Context) error { return nil },
-			render:     func(http.ResponseWriter, *http.Request) (any, error) { return nil, nil },
-			wantErr:    "",
+			render:     noopRender,
 		},
 		{
 			name:       "bad - handler not a function",
 			appHandler: "not a function",
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
+			render:     noopRender,
 			wantErr:    "not a function",
-		},
-		{
-			name:       "bad - handler invalid",
-			appHandler: func() error { return nil },
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "handler should accept 1 or 2 inputs",
 		},
 		{
 			name:       "bad - render not a function",
 			appHandler: func(context.Context) error { return nil },
 			render:     "not a function",
 			wantErr:    "not a function",
-		},
-		{
-			name:       "bad - render invalid",
-			appHandler: func(context.Context) error { return nil },
-			render:     func(http.ResponseWriter) error { return nil },
-			wantErr:    "render should accept at least 2 inputs",
-		},
-		{
-			name:       "bad - 2 inputs, second not struct",
-			appHandler: func(context.Context, int) error { return nil },
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "second handler input should be a struct or struct pointer",
-		},
-		{
-			name:       "bad - 3 inputs",
-			appHandler: func(context.Context, *testArgs, *testArgs) error { return nil },
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "handler should accept 1 or 2 inputs",
-		},
-		{
-			name:       "bad - last handler output not error",
-			appHandler: func(context.Context) string { return "" },
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "last handler output should be error",
-		},
-		{
-			name:       "bad - render inputs do not match handler outputs",
-			appHandler: func(context.Context) (string, error) { return "", nil },
-			render:     func(http.ResponseWriter, *http.Request) error { return nil },
-			wantErr:    "render inputs do not match handler outputs",
 		},
 		{
 			name:       "bad - handler checked before render",
@@ -241,21 +189,23 @@ func TestNewHandlerConstruction(t *testing.T) {
 	}
 }
 
-func TestMustNewHandler(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Fatal("should panic on invalid handler")
+func TestMustNewConstructors(t *testing.T) {
+	t.Run("MustNewHandler panics on invalid handler", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("should panic on invalid handler")
+			}
+		}()
+
+		MustNewHandler("not a function", noopRender)
+	})
+
+	t.Run("MustNewVoidHandler returns handler", func(t *testing.T) {
+		handler := MustNewVoidHandler(func(context.Context, *testArgs) error { return nil })
+		if handler == nil {
+			t.Fatal("handler should not be nil")
 		}
-	}()
-
-	MustNewHandler("not a function", func(http.ResponseWriter, *http.Request) error { return nil })
-}
-
-func TestMustNewVoidHandler(t *testing.T) {
-	handler := MustNewVoidHandler(func(context.Context, *testArgs) error { return nil })
-	if handler == nil {
-		t.Fatal("handler should not be nil")
-	}
+	})
 }
 
 func TestNewVoidHandler(t *testing.T) {
@@ -270,11 +220,9 @@ func TestNewVoidHandler(t *testing.T) {
 
 		w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 3}`, "application/json")
 
-		if w.Code != http.StatusOK {
-			t.Fatalf("status should be 200, got %d", w.Code)
-		} else if w.Body.Len() > 0 {
-			t.Fatalf("body should be empty, got %q", w.Body.String())
-		} else if gotPage != 3 {
+		assertEmptyEnvelope(t, w)
+
+		if gotPage != 3 {
 			t.Fatalf("args should be parsed page 3, got %d", gotPage)
 		}
 	})
@@ -288,11 +236,9 @@ func TestNewVoidHandler(t *testing.T) {
 
 		w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 7}`, "application/json")
 
-		if w.Code != http.StatusOK {
-			t.Fatalf("status should be 200, got %d", w.Code)
-		} else if w.Body.Len() > 0 {
-			t.Fatalf("body should be empty, got %q", w.Body.String())
-		} else if gotPage != 7 {
+		assertEmptyEnvelope(t, w)
+
+		if gotPage != 7 {
 			t.Fatalf("args should be parsed page 7, got %d", gotPage)
 		}
 	})
@@ -331,7 +277,7 @@ func TestNewHandlerServeParams(t *testing.T) {
 				}
 				return nil
 			},
-			func(w http.ResponseWriter, r *http.Request) error { return nil },
+			noopRender,
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -340,11 +286,7 @@ func TestNewHandlerServeParams(t *testing.T) {
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, req)
 
-		if w.Code != http.StatusOK {
-			t.Fatalf("status should be 200, got %d", w.Code)
-		} else if w.Body.Len() > 0 {
-			t.Fatalf("body should be empty, got %q", w.Body.String())
-		}
+		assertEmptyEnvelope(t, w)
 	})
 
 	t.Run("ok - handler second input is request args pointer", func(t *testing.T) {
@@ -406,11 +348,9 @@ func TestNewHandlerServeParams(t *testing.T) {
 
 		if id != 1 || name != "alice" {
 			t.Fatalf("render should receive data outs (%d, %q), got (%d, %q)", 1, "alice", id, name)
-		} else if w.Code != http.StatusOK {
-			t.Fatalf("status should be 200, got %d", w.Code)
-		} else if w.Body.Len() > 0 {
-			t.Fatalf("body should be empty, got %q", w.Body.String())
 		}
+
+		assertEmptyEnvelope(t, w)
 	})
 
 	t.Run("ok - handler data and error forwarded with error input", func(t *testing.T) {
@@ -480,11 +420,9 @@ func TestNewHandlerServeParams(t *testing.T) {
 
 		if !errors.Is(got, sentinelErr) {
 			t.Fatalf("render should receive %v, got %v", sentinelErr, got)
-		} else if w.Code != http.StatusOK {
-			t.Fatalf("status should be 200, got %d", w.Code)
-		} else if w.Body.Len() > 0 {
-			t.Fatalf("body should be empty, got %q", w.Body.String())
 		}
+
+		assertEmptyEnvelope(t, w)
 	})
 
 	t.Run("bad - handler error without error input drops data, render skipped", func(t *testing.T) {
@@ -525,19 +463,61 @@ func TestNewHandlerServeParams(t *testing.T) {
 			t.Fatalf("errno should be %d, got %d", errUnexpectedException.code, v.Errno)
 		}
 	})
+}
 
-	t.Run("ok - all nil, no data written - empty 200", func(t *testing.T) {
+func TestNewHandlerRenderOptions(t *testing.T) {
+	sentinelErr := errors.New("sentinel")
+
+	t.Run("ok - render returns data and status code options", func(t *testing.T) {
 		handler := MustNewHandler(
-			func(ctx context.Context) error { return nil },
-			func(w http.ResponseWriter, r *http.Request) error { return nil },
+			func(ctx context.Context) (string, error) { return "alice", nil },
+			func(w http.ResponseWriter, r *http.Request, name string) (apiResponseOptions, error) {
+				return apiResponseOptions{
+					withData(mapAny{"name": name}),
+					withStatusCode(http.StatusCreated),
+				}, nil
+			},
 		)
 
 		w := serveRequest(t, handler, http.MethodGet, "/", "", "")
+		v := parseResp(t, w)
 
-		if w.Code != http.StatusOK {
-			t.Fatalf("status should be 200, got %d", w.Code)
-		} else if w.Body.Len() > 0 {
-			t.Fatalf("body should be empty, got %q", w.Body.String())
+		if w.Code != http.StatusCreated {
+			t.Fatalf("status should be 201, got %d", w.Code)
+		} else if m, _ := v.Data.(map[string]any); m["name"] != "alice" {
+			t.Fatalf("data should echo alice, got %+v", v.Data)
+		}
+	})
+
+	t.Run("ok - render returns nil options responds empty envelope", func(t *testing.T) {
+		handler := MustNewHandler(
+			func(ctx context.Context) error { return nil },
+			func(w http.ResponseWriter, r *http.Request) (apiResponseOptions, error) {
+				return nil, nil
+			},
+		)
+
+		assertEmptyEnvelope(t, serveRequest(t, handler, http.MethodGet, "/", "", ""))
+	})
+
+	t.Run("ok - handler error mapped to custom api error via options", func(t *testing.T) {
+		handler := MustNewHandler(
+			func(ctx context.Context) error { return sentinelErr },
+			func(w http.ResponseWriter, r *http.Request, err error) (apiResponseOptions, error) {
+				if !errors.Is(err, sentinelErr) {
+					t.Fatalf("render should receive %v, got %v", sentinelErr, err)
+				}
+				return apiResponseOptions{withError(errBadRequest.WrapError(sentinelErr))}, nil
+			},
+		)
+
+		w := serveRequest(t, handler, http.MethodGet, "/", "", "")
+		v := parseResp(t, w)
+
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("status should be 400, got %d", w.Code)
+		} else if v.Errno != errBadRequest.code {
+			t.Fatalf("errno should be %d, got %d", errBadRequest.code, v.Errno)
 		}
 	})
 }
@@ -568,4 +548,22 @@ func parseResp(t *testing.T, w *httptest.ResponseRecorder) apiResponse {
 		t.Fatalf("unmarshal response %q: %v", w.Body.String(), err)
 	}
 	return v
+}
+
+// assertEmptyEnvelope 断言200空成功响应：errno为0、error为空、data为空对象
+func assertEmptyEnvelope(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status should be 200, got %d", w.Code)
+	}
+
+	v := parseResp(t, w)
+	if v.Errno != 0 || v.Error != "" {
+		t.Fatalf("response should be empty envelope, got %+v", v)
+	}
+
+	if data, ok := v.Data.(map[string]any); !ok || len(data) != 0 {
+		t.Fatalf("data should be empty object, got %+v", v.Data)
+	}
 }

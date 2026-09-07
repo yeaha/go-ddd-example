@@ -90,6 +90,7 @@ func (s *Server) newRouter() chi.Router {
 // 后续入参类型就与appHandler的出参参数类型一致，但最后一个error参数可选，
 // 如果声明了error入参，appHandler执行完毕后的error会传递给render函数，以实现自定义错误处理。
 // render函数的出参可以是(any, error)和(error)两种，如果返回了数据，就会被下发到客户端，否则只会响应空结果。
+// render函数的出参如果是apiResponseOptions类型，会被直接用于执行sendResponse()
 //
 // Example:
 //
@@ -108,6 +109,12 @@ func (s *Server) newRouter() chi.Router {
 //	  func(context.Context, args) (int, string, error),
 //	  // 如果app handler返回了数据，render的入参也需要有相同的参数
 //	  func(http.ResponseWriter, *http.Request, int, string) (any, error),
+//	)
+//
+//	NewHandler(
+//	  func(context.Context, args) (int, string, error),
+//	  // render支持返回apiResponseOptions
+//	  func(http.ResponseWriter, *http.Request, int, string) (apiResponseOptions, error),
 //	)
 //
 //	NewHandler(
@@ -196,9 +203,18 @@ func NewHandler(appHandler any, render any) (http.HandlerFunc, error) {
 			return
 		}
 
-		if len(renderOuts) > 1 {
-			sendResponse(w, withData(renderOuts[0].Interface()))
+		if len(renderOuts) == 1 {
+			sendResponse(w)
 			return
+		}
+
+		renderResult := renderOuts[0].Interface()
+		if opts, ok := renderResult.(apiResponseOptions); ok {
+			sendResponse(w, opts...)
+		} else if renderResult != nil {
+			sendResponse(w, withData(renderResult))
+		} else {
+			sendResponse(w)
 		}
 	}), nil
 }
