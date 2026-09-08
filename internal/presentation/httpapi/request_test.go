@@ -92,7 +92,7 @@ func TestScanRequest(t *testing.T) {
 			contentType: "",
 			body:        "",
 			want:        nil,
-			wantErr:     "decode values",
+			wantErr:     "decode query string",
 		},
 		{
 			name:        "bad - unsupported method",
@@ -173,7 +173,7 @@ func TestScanRequest(t *testing.T) {
 			contentType: "",
 			body:        "",
 			want:        nil,
-			wantErr:     "validate payload",
+			wantErr:     "Key: 'scanRequestPayload.Email' Error:Field validation for 'Email' failed on the 'email' tag",
 		},
 	}
 

@@ -95,7 +95,7 @@ func (c *authController) readSessionToken(r *http.Request) (string, bool) {
 func (c *authController) LoginWithEmail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.LoginWithEmail{}
-		mustScanJSON(&req, r.Body)
+		mustScanRequest(&req, r)
 
 		_, token, err := c.loginWithEmail.Handle(r.Context(), req)
 		if err != nil {
@@ -127,7 +127,7 @@ func (c *authController) Logout() http.HandlerFunc {
 func (c *authController) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.Register{}
-		mustScanJSON(&req, r.Body)
+		mustScanRequest(&req, r)
 
 		_, token, err := c.register.Handle(r.Context(), req)
 		if err != nil {
@@ -148,7 +148,7 @@ func (c *authController) ChangePassword() http.HandlerFunc {
 		req := handler.ChangePassword{
 			Account: mustVisitorFromCtx(r.Context()),
 		}
-		mustScanJSON(&req, r.Body)
+		mustScanRequest(&req, r)
 
 		if err := c.changePassword.Handle(r.Context(), req); err != nil {
 			if errors.Is(err, domain.ErrWrongPassword) {
@@ -179,7 +179,7 @@ func (c *authController) LoginWithOauth() http.HandlerFunc {
 		req := struct {
 			RedirectURI string `json:"redirect_uri" validate:"http_url"` // FIXME: 检查重定向地址域名有效性，防止钓鱼劫持
 		}{}
-		mustScanValues(&req, r.URL.Query())
+		mustScanRequest(&req, r)
 
 		sendResponse(w, withData(mapAny{
 			"next_url": client.AuthorizeURL(req.RedirectURI).String(),
@@ -200,7 +200,7 @@ func (c *authController) VerifyOauth() http.HandlerFunc {
 		req := handler.VerifyOauth{
 			Client: client,
 		}
-		mustScanJSON(&req, r.Body)
+		mustScanRequest(&req, r)
 
 		query, err := url.ParseQuery(req.RawQuery)
 		if err != nil {
@@ -238,7 +238,7 @@ func (c *authController) VerifyOauth() http.HandlerFunc {
 func (c *authController) RegisterWithOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := handler.RegisterWithOauth{}
-		mustScanJSON(&req, r.Body)
+		mustScanRequest(&req, r)
 
 		account, token, err := c.registerWithOauth.Handle(r.Context(), req)
 		if err != nil {
