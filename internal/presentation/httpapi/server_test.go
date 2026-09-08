@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -149,6 +150,89 @@ func TestCheckRenderParameters(t *testing.T) {
 	}
 }
 
+func TestCheckConstructorParameters(t *testing.T) {
+	tests := []struct {
+		name        string
+		handler     any
+		constructor any
+		wantErr     string
+	}{
+		{
+			"ok - struct args",
+			func(context.Context, testArgs) error { return nil },
+			func(*http.Request) testArgs { return testArgs{} },
+			"",
+		},
+		{
+			"ok - pointer args",
+			func(context.Context, *testArgs) error { return nil },
+			func(*http.Request) *testArgs { return nil },
+			"",
+		},
+		{
+			"ok - constructor input any accepts request",
+			func(context.Context, testArgs) error { return nil },
+			func(any) testArgs { return testArgs{} },
+			"",
+		},
+		{
+			"bad - handler only 1 input",
+			func(context.Context) error { return nil },
+			func(*http.Request) testArgs { return testArgs{} },
+			"constructor is useless for handler with only 1 input",
+		},
+		{
+			"bad - no inputs",
+			func(context.Context, testArgs) error { return nil },
+			func() testArgs { return testArgs{} },
+			"constructor should accept 1 input",
+		},
+		{
+			"bad - too many inputs",
+			func(context.Context, testArgs) error { return nil },
+			func(*http.Request, int) testArgs { return testArgs{} },
+			"constructor should accept 1 input",
+		},
+		{
+			"bad - no outputs",
+			func(context.Context, testArgs) error { return nil },
+			func(*http.Request) {},
+			"constructor should return 1 output",
+		},
+		{
+			"bad - too many outputs",
+			func(context.Context, testArgs) error { return nil },
+			func(*http.Request) (testArgs, error) { return testArgs{}, nil },
+			"constructor should return 1 output",
+		},
+		{
+			"bad - input not accept request",
+			func(context.Context, testArgs) error { return nil },
+			func(*testArgs) testArgs { return testArgs{} },
+			"constructor input *httpapi.testArgs does not accept *http.Request",
+		},
+		{
+			"bad - output type mismatch",
+			func(context.Context, testArgs) error { return nil },
+			func(*http.Request) int { return 0 },
+			"constructor output int does not match handler input httpapi.testArgs",
+		},
+		{
+			"bad - output any not assignable to concrete args",
+			func(context.Context, testArgs) error { return nil },
+			func(*http.Request) any { return nil },
+			"constructor output interface {} does not match handler input httpapi.testArgs",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler, constructor := factor(t, tt.handler), factor(t, tt.constructor)
+			assertCheck(t, checkConstructorParameters(handler, constructor), tt.wantErr)
+		})
+	}
+}
+
 func TestNewHandlerConstruction(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -183,7 +267,7 @@ func TestNewHandlerConstruction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewHandler(tt.appHandler, tt.render)
+			_, err := newHandler(tt.appHandler, nil, tt.render)
 			assertCheck(t, err, tt.wantErr)
 		})
 	}
@@ -520,6 +604,95 @@ func TestNewHandlerRenderOptions(t *testing.T) {
 			t.Fatalf("errno should be %d, got %d", errBadRequest.code, v.Errno)
 		}
 	})
+}
+
+func TestNewHandlerWithConstructor(t *testing.T) {
+	render := func(http.ResponseWriter, *http.Request, int) (any, error) { return nil, nil }
+
+	t.Run("bad - constructor not a function", func(t *testing.T) {
+		_, err := NewHandlerWithConstructor(func(context.Context, testArgs) (int, error) { return 0, nil }, "not a function", render)
+		assertCheck(t, err, "not a function")
+	})
+
+	t.Run("bad - constructor output mismatch", func(t *testing.T) {
+		_, err := NewHandlerWithConstructor(
+			func(context.Context, testArgs) (int, error) { return 0, nil },
+			func(*http.Request) int { return 0 },
+			render,
+		)
+		assertCheck(t, err, "constructor output int does not match handler input httpapi.testArgs")
+	})
+
+	t.Run("ok - constructor builds args from request", func(t *testing.T) {
+		handler, err := NewHandlerWithConstructor(
+			func(ctx context.Context, args testArgs) (int, error) { return args.Page, nil },
+			func(r *http.Request) testArgs {
+				page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+				return testArgs{Page: page}
+			},
+			func(w http.ResponseWriter, r *http.Request, page int) (any, error) {
+				return mapAny{"page": page}, nil
+			},
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		w := serveRequest(t, handler, http.MethodGet, "/?page=9", `{"page": 100}`, "application/json")
+		v := parseResp(t, w)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status should be 200, got %d", w.Code)
+		} else if m, _ := v.Data.(map[string]any); m["page"] != float64(9) {
+			t.Fatalf("data should echo page 9 from constructor, got %+v", v.Data)
+		}
+	})
+}
+
+func TestNewResultHandler(t *testing.T) {
+	handler, err := NewResultHandler(
+		func(ctx context.Context, args testArgs) (int, error) { return args.Page, nil },
+		func(w http.ResponseWriter, r *http.Request, page int) (any, error) {
+			return mapAny{"page": page}, nil
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := serveRequest(t, handler, http.MethodPost, "/", `{"page": 3}`, "application/json")
+	v := parseResp(t, w)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status should be 200, got %d", w.Code)
+	} else if m, _ := v.Data.(map[string]any); m["page"] != float64(3) {
+		t.Fatalf("data should echo page 3, got %+v", v.Data)
+	}
+}
+
+func TestNewResultHandlerWithConstructor(t *testing.T) {
+	handler, err := NewResultHandlerWithConstructor(
+		func(ctx context.Context, args testArgs) (int, error) { return args.Page, nil },
+		func(r *http.Request) testArgs {
+			page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+			return testArgs{Page: page}
+		},
+		func(w http.ResponseWriter, r *http.Request, page int) (any, error) {
+			return mapAny{"page": page}, nil
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := serveRequest(t, handler, http.MethodGet, "/?page=9", "", "")
+	v := parseResp(t, w)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status should be 200, got %d", w.Code)
+	} else if m, _ := v.Data.(map[string]any); m["page"] != float64(9) {
+		t.Fatalf("data should echo page 9, got %+v", v.Data)
+	}
 }
 
 func serveRequest(t *testing.T, handler http.Handler, method, target, body, contentType string) *httptest.ResponseRecorder {

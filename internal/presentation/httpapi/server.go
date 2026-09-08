@@ -129,6 +129,23 @@ func (s *Server) newRouter() chi.Router {
 //	  func(http.ResponseWriter, *http.Request, int, string) error,
 //	)
 func NewHandler(appHandler any, render any) (http.HandlerFunc, error) {
+	return newHandler(appHandler, nil, render)
+}
+
+// NewHandlerWithConstructor 把app handler转换为http.Handler，constructor函数用于构造app handler入参
+//
+// Example:
+//
+//	NewHandlerWithConstructor(
+//	  func(context.Context, args) (string, error),
+//	  func(*http.Request) args,
+//	  func(http.ResponseWriter, *http.Request, string) error,
+//	)
+func NewHandlerWithConstructor(appHandler, constructor, render any) (http.HandlerFunc, error) {
+	return newHandler(appHandler, constructor, render)
+}
+
+func newHandler(appHandler any, constructor any, render any) (http.HandlerFunc, error) {
 	handlerFactor, err := newFuncFactor(appHandler)
 	if err != nil {
 		return nil, err
@@ -143,6 +160,16 @@ func NewHandler(appHandler any, render any) (http.HandlerFunc, error) {
 		return nil, err
 	}
 
+	var constructorFactor *funcFactor
+	if constructor != nil {
+		constructorFactor, err = newFuncFactor(constructor)
+		if err != nil {
+			return nil, err
+		} else if err = checkConstructorParameters(handlerFactor, constructorFactor); err != nil {
+			return nil, err
+		}
+	}
+
 	// 是否需要把handler返回的error传递给render
 	passErr := len(renderFactor.ins)-2 == len(handlerFactor.outs) &&
 		errorT.AssignableTo(renderFactor.ins[len(renderFactor.ins)-1])
@@ -153,24 +180,30 @@ func NewHandler(appHandler any, render any) (http.HandlerFunc, error) {
 		}
 
 		if len(handlerFactor.ins) > 1 {
-			argT := handlerFactor.ins[1]
-			isPtr := argT.Kind() == reflect.Pointer
+			var handlerArg reflect.Value
 
-			if isPtr {
-				argT = argT.Elem()
+			if constructorFactor != nil {
+				handlerArg = constructorFactor.v.Call([]reflect.Value{reflect.ValueOf(r)})[0]
+			} else {
+				argT := handlerFactor.ins[1]
+				isPtr := argT.Kind() == reflect.Pointer
+
+				if isPtr {
+					argT = argT.Elem()
+				}
+
+				handlerArg = reflect.New(argT)
+				if err := scanRequest(handlerArg.Interface(), r); err != nil {
+					sendResponse(w, withError(errBadRequest.WrapError(err)))
+					return
+				}
+
+				if !isPtr {
+					handlerArg = handlerArg.Elem()
+				}
 			}
 
-			handlerArgs := reflect.New(argT)
-			if err := scanRequest(handlerArgs.Interface(), r); err != nil {
-				sendResponse(w, withError(errBadRequest.WrapError(err)))
-				return
-			}
-
-			if !isPtr {
-				handlerArgs = handlerArgs.Elem()
-			}
-
-			handlerIns = append(handlerIns, handlerArgs)
+			handlerIns = append(handlerIns, handlerArg)
 		}
 
 		handlerOuts := handlerFactor.v.Call(handlerIns)
@@ -221,7 +254,7 @@ func NewHandler(appHandler any, render any) (http.HandlerFunc, error) {
 
 // MustNewHandler 把appHandler转换为http.Handler，转换失败则panic
 func MustNewHandler(appHandler any, render any) http.HandlerFunc {
-	handler, err := NewHandler(appHandler, render)
+	handler, err := newHandler(appHandler, nil, render)
 	if err != nil {
 		panic(err)
 	}
@@ -230,9 +263,13 @@ func MustNewHandler(appHandler any, render any) http.HandlerFunc {
 
 // NewVoidHandler 对不返回数据的app handler进行默认转换
 func NewVoidHandler[T any](appHandler func(context.Context, T) error) (http.HandlerFunc, error) {
-	return NewHandler(appHandler, func(http.ResponseWriter, *http.Request) error {
-		return nil
-	})
+	return newHandler(
+		appHandler,
+		nil,
+		func(http.ResponseWriter, *http.Request) error {
+			return nil
+		},
+	)
 }
 
 // MustNewVoidHandler 对不返回数据的app handler进行默认转换，转换失败则panic
@@ -242,6 +279,23 @@ func MustNewVoidHandler[T any](appHandler func(context.Context, T) error) http.H
 		panic(err)
 	}
 	return handler
+}
+
+// NewResultHandler 把返回数据的app handler转换为http.HandlerFunc
+func NewResultHandler[T any, R any](
+	appHandler func(context.Context, T) (R, error),
+	render func(http.ResponseWriter, *http.Request, R) (any, error),
+) (http.HandlerFunc, error) {
+	return newHandler(appHandler, nil, render)
+}
+
+// NewResultHandlerWithConstructor 把返回数据的app handler转换为http.HandlerFunc，需要提供constructor函数生成app handler入参
+func NewResultHandlerWithConstructor[T any, R any](
+	appHandler func(context.Context, T) (R, error),
+	constructor func(*http.Request) T,
+	render func(http.ResponseWriter, *http.Request, R) (any, error),
+) (http.HandlerFunc, error) {
+	return newHandler(appHandler, constructor, render)
 }
 
 type funcFactor struct {
@@ -345,6 +399,28 @@ func checkRenderParameters(handler, render *funcFactor) error {
 
 	if !render.outs[len(render.outs)-1].AssignableTo(errorT) {
 		return errors.New("last render output should be error")
+	}
+
+	return nil
+}
+
+// 检查constructor参数
+//   - handler必须有2个入参，否则constructor没有意义
+//   - constructor入参数量为1个，且必须能接受*http.Request
+//   - constructor出参数量为1个，且出参类型必须能赋值给handler的第二个入参
+func checkConstructorParameters(handler, constructor *funcFactor) error {
+	if len(handler.ins) == 1 {
+		return errors.New("constructor is useless for handler with only 1 input")
+	} else if len(constructor.ins) != 1 {
+		return errors.New("constructor should accept 1 input")
+	} else if len(constructor.outs) != 1 {
+		return errors.New("constructor should return 1 output")
+	}
+
+	if !httpRequestT.AssignableTo(constructor.ins[0]) {
+		return fmt.Errorf("constructor input %s does not accept *http.Request", constructor.ins[0])
+	} else if !constructor.outs[0].AssignableTo(handler.ins[1]) {
+		return fmt.Errorf("constructor output %s does not match handler input %s", constructor.outs[0], handler.ins[1])
 	}
 
 	return nil
