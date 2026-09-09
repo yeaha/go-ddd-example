@@ -3,10 +3,8 @@ package httpapi
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"mime"
 	"net/http"
-	"net/url"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/schema"
@@ -27,49 +25,25 @@ func init() {
 	requestDecoder.SetAliasTag("json")
 }
 
-func scanJSON(dst any, input io.Reader) error {
-	if err := json.NewDecoder(input).Decode(dst); err != nil {
-		return fmt.Errorf("json decode, %w", err)
-	}
-
-	if err := validatePayload(dst); err != nil {
-		return fmt.Errorf("validate payload, %w", err)
-	}
-	return nil
-}
-
-func mustScanJSON(dst any, input io.Reader) {
-	if err := scanJSON(dst, input); err != nil {
-		panic(errBadRequest.WrapError(err))
-	}
-}
-
-func scanValues(dst any, values url.Values) error {
-	if len(values) > 0 {
-		if err := requestDecoder.Decode(dst, values); err != nil {
-			return fmt.Errorf("decode values, %w", err)
+func scanRequest(payload any, r *http.Request) (err error) {
+	defer func() {
+		if err == nil {
+			if err = validatePayload(payload); err != nil {
+				err = fmt.Errorf("validate payload, %w", err)
+			}
 		}
-	}
+	}()
 
-	if err := validatePayload(dst); err != nil {
-		return fmt.Errorf("validate payload, %w", err)
-	}
-	return nil
-}
-
-func mustScanValues(dst any, values url.Values) {
-	if err := scanValues(dst, values); err != nil {
-		panic(errBadRequest.WrapError(err))
-	}
-}
-
-func scanRequest(payload any, r *http.Request) error {
 	switch r.Method {
 	default:
 		return fmt.Errorf("unsupported http method %s", r.Method)
 
 	case http.MethodGet, http.MethodDelete:
-		return scanValues(payload, r.URL.Query())
+		if values := r.URL.Query(); len(values) > 0 {
+			if err := requestDecoder.Decode(payload, values); err != nil {
+				return fmt.Errorf("decode query string, %w", err)
+			}
+		}
 
 	case http.MethodPost, http.MethodPut, http.MethodPatch:
 		mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -82,7 +56,9 @@ func scanRequest(payload any, r *http.Request) error {
 			return fmt.Errorf("unsupported content type: %s", mediaType)
 
 		case "application/json":
-			return scanJSON(payload, r.Body)
+			if err := json.NewDecoder(r.Body).Decode(payload); err != nil {
+				return fmt.Errorf("json decode, %w", err)
+			}
 
 		case "application/x-www-form-urlencoded", "multipart/form-data":
 			if mediaType == "multipart/form-data" {
@@ -95,9 +71,15 @@ func scanRequest(payload any, r *http.Request) error {
 				}
 			}
 
-			return scanValues(payload, r.Form)
+			if values := r.Form; len(values) > 0 {
+				if err := requestDecoder.Decode(payload, values); err != nil {
+					return fmt.Errorf("decode form, %w", err)
+				}
+			}
 		}
 	}
+
+	return nil
 }
 
 func mustScanRequest(payload any, r *http.Request) {
