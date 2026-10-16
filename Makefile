@@ -9,6 +9,11 @@ MKFILE_DIR := $(dir $(MKFILE_PATH))
 DIST_DIR := ${MKFILE_DIR}build/dist
 
 # Rules
+.PHONY: ginkgo
+ginkgo:
+	cd ${MKFILE_DIR}
+	go tool ginkgo -r -p --randomize-all --randomize-suites
+
 .PHONY: test
 test:
 	cd ${MKFILE_DIR}
