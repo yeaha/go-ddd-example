@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "skills": {
+    "debugging-failures": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/debugging-failures/SKILL.md",
+      "computedHash": "d4139a8a756ceb08cb3017b6a3dd1ea257c72aa23c378bc3510d51c3fa7e34e8"
+    },
+    "decorators": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/decorators/SKILL.md",
+      "computedHash": "2421cebfb48714ee72e769922e1aad8babea0d5c950f923fc8b7cb8e2483d2bb"
+    },
+    "filtering": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/filtering/SKILL.md",
+      "computedHash": "48a90a87db10952969b60f589fc3bbe192bf3cd0afe71ac6c6c4b3cf83c6fa68"
+    },
+    "overview": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/overview/SKILL.md",
+      "computedHash": "2ed2b78f605bcf7c68e6a5cdc6a976d49231d6a9f188292298f197a6ea9570eb"
+    },
+    "parallelism": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/parallelism/SKILL.md",
+      "computedHash": "daeecb6f8dd3c3d553dc850ef998531534d0cb3dd6785b6475169a89097f6eab"
+    },
+    "setup": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/setup/SKILL.md",
+      "computedHash": "38f175e32c901cd77986867ed5c938f54ae83fe7c8ac6b0027652223e20c212d"
+    },
+    "tables-and-dynamic-specs": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/tables-and-dynamic-specs/SKILL.md",
+      "computedHash": "d8268cdab8aa611d8e03c5f67778350de420a0aa4e0ca8e218525ac72a4d9966"
+    },
+    "timeouts-and-async": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/timeouts-and-async/SKILL.md",
+      "computedHash": "839b52ecf8e5497f99a201c872526120fdae0b49a16cf93b5d8fe60ccc1baa59"
+    },
+    "writing-specs": {
+      "source": "onsi/ginkgo",
+      "sourceType": "github",
+      "skillPath": "plugins/ginkgo/skills/writing-specs/SKILL.md",
+      "computedHash": "4d7a916c20d68bf18c60e9730d2e3788ef77b9ba801438b63dd3eaebde78c402"
+    }
+  }
+}
