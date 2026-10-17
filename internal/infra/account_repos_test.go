@@ -1,64 +1,140 @@
-//go:build dbtest
-// +build dbtest
-
 package infra
 
 import (
-	"cmp"
-	"context"
-	"errors"
-	"fmt"
-	"testing"
-	"time"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
+	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 
-	"github.com/joyparty/entity"
+	"github.com/google/uuid"
 )
 
-func TestAccountRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(tx entity.DB) (err error) {
-		defer func() {
-			err = cmp.Or(err, errRollbackTest)
-		}()
+var _ = Describe("accountDBRepository", func() {
+	const (
+		email        = "test@test.com"
+		updatedEmail = "updated@test.com"
+	)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+	var repos adapter.AccountRepository
 
-		email := "test@test.com"
-		repos := newAccountDBRepository(tx)
+	BeforeEach(func() {
+		repos = newAccountDBRepository(beginTestTx())
+	})
 
-		return testTable{
-			{
-				Name: "Create",
-				Func: func() error {
-					account := &domain.Account{}
-					if err := account.SetEmail(email); err != nil {
-						return fmt.Errorf("set email, %w", err)
-					}
+	newAccount := func() *domain.Account {
+		GinkgoHelper()
 
-					if err := account.SetPassword("abcdef"); err != nil {
-						return fmt.Errorf("set password, %w", err)
-					}
-
-					return repos.Create(ctx, account)
-				},
-			},
-			{
-				Name: "FindByEmail",
-				Func: func() error {
-					if _, err := repos.FindByEmail(ctx, "test@test.net"); err == nil {
-						return errors.New("expected error for non-existent account")
-					} else if !errors.Is(err, domain.ErrAccountNotFound) {
-						return fmt.Errorf("expected domain.ErrAccountNotFound, got %v", err)
-					}
-
-					_, err := repos.FindByEmail(ctx, email)
-					return err
-				},
-			},
-		}.Execute()
-	}); !errors.Is(err, errRollbackTest) {
-		t.Fatalf("account repository, %v", err)
+		account := &domain.Account{}
+		Expect(account.SetEmail(email)).To(Succeed())
+		Expect(account.SetPassword("abcdef")).To(Succeed())
+		return account
 	}
-}
+
+	// createAccount 创建账号并返回带 ID 的领域对象，供需要 ID 的 spec 复用
+	createAccount := func(ctx SpecContext) *domain.Account {
+		GinkgoHelper()
+
+		Expect(repos.Create(ctx, newAccount())).To(Succeed())
+
+		account, err := repos.FindByEmail(ctx, email)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(account).NotTo(BeNil())
+		return account
+	}
+
+	Describe("Create", func() {
+		It("persists the account", func(ctx SpecContext) {
+			Expect(repos.Create(ctx, newAccount())).To(Succeed())
+
+			account, err := repos.FindByEmail(ctx, email)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(account).NotTo(BeNil())
+			Expect(account.Email).To(Equal(email))
+			Expect(account.ComparePassword("abcdef")).To(BeTrue())
+		}, specTimeout)
+	})
+
+	Describe("Find", func() {
+		When("the account exists", func() {
+			var account *domain.Account
+
+			BeforeEach(func(ctx SpecContext) {
+				account = createAccount(ctx)
+			})
+
+			It("returns the account", func(ctx SpecContext) {
+				got, err := repos.Find(ctx, account.ID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(got).NotTo(BeNil())
+				Expect(got.ID).To(Equal(account.ID))
+				Expect(got.Email).To(Equal(email))
+
+				// 第二次会命中 entity 的内存缓存，结果应当一致
+				cached, err := repos.Find(ctx, account.ID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cached).NotTo(BeNil())
+				Expect(cached.ID).To(Equal(account.ID))
+				Expect(cached.Email).To(Equal(email))
+			}, specTimeout)
+		})
+
+		When("no account matches the id", func() {
+			It("returns domain.ErrAccountNotFound", func(ctx SpecContext) {
+				_, err := repos.Find(ctx, uuid.New())
+				Expect(err).To(MatchError(domain.ErrAccountNotFound))
+			}, specTimeout)
+		})
+	})
+
+	Describe("FindByEmail", func() {
+		When("the account exists", func() {
+			BeforeEach(func(ctx SpecContext) {
+				Expect(repos.Create(ctx, newAccount())).To(Succeed())
+			})
+
+			It("returns the matching account", func(ctx SpecContext) {
+				account, err := repos.FindByEmail(ctx, email)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(account).NotTo(BeNil())
+				Expect(account.Email).To(Equal(email))
+			}, specTimeout)
+		})
+
+		When("no account matches the email", func() {
+			It("returns domain.ErrAccountNotFound", func(ctx SpecContext) {
+				_, err := repos.FindByEmail(ctx, "test@test.net")
+				Expect(err).To(MatchError(domain.ErrAccountNotFound))
+			}, specTimeout)
+		})
+	})
+
+	Describe("Update", func() {
+		When("the account exists", func() {
+			var account *domain.Account
+
+			BeforeEach(func(ctx SpecContext) {
+				account = createAccount(ctx)
+
+				// 预热缓存，验证 Update 之后按 ID 读不到旧数据
+				_, err := repos.Find(ctx, account.ID)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("persists the change and invalidates the cached account", func(ctx SpecContext) {
+				Expect(account.SetEmail(updatedEmail)).To(Succeed())
+				Expect(repos.Update(ctx, account)).To(Succeed())
+
+				updated, err := repos.FindByEmail(ctx, updatedEmail)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(updated).NotTo(BeNil())
+				Expect(updated.ID).To(Equal(account.ID))
+
+				cached, err := repos.Find(ctx, account.ID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cached).NotTo(BeNil())
+				Expect(cached.Email).To(Equal(updatedEmail))
+			}, specTimeout)
+		})
+	})
+})

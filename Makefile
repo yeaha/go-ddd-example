@@ -9,20 +9,10 @@ MKFILE_DIR := $(dir $(MKFILE_PATH))
 DIST_DIR := ${MKFILE_DIR}build/dist
 
 # Rules
-.PHONY: ginkgo
-ginkgo:
-	cd ${MKFILE_DIR}
-	go tool ginkgo -r -p --randomize-all --randomize-suites
-
 .PHONY: test
 test:
 	cd ${MKFILE_DIR}
-	go test -v ./... | grep -v '^?'
-
-.PHONY: alltest
-alltest:
-	cd ${MKFILE_DIR}
-	go test -tags=dbtest -v ./... | grep -v '^?'
+	go tool ginkgo -r -p --randomize-all --randomize-suites --keep-going --no-color ./internal/
 
 # go install github.com/mitranim/gow@latest
 .PHONY: serve

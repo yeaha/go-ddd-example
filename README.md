@@ -12,10 +12,7 @@
 
 - `make serve` 启动本地测试服务
 - `make clean` 清除docker容器
-- `make test` 执行单元测试
-- `make alltest` 执行所有测试(单元测试和数据库集成测试)
-
-`make alltest`需要初始化完成的数据库，可以用`make serve`来实现初始化，只需要初始化一次即可，但在`make clean`之后需要重新初始化
+- `make test` 执行测试
 
 ## 接口测试
 
