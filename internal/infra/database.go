@@ -2,7 +2,7 @@ package infra
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
@@ -32,11 +32,7 @@ type baseRow struct {
 
 func (base *baseRow) BeforeInsert(_ context.Context) error {
 	if base.ID.Status != pgtype.Present {
-		if id, err := uuid.NewV7(); err != nil {
-			return fmt.Errorf("create id, %w", err)
-		} else if err := database.SetUUID(&base.ID, id); err != nil {
-			return fmt.Errorf("set id, %w", err)
-		}
+		return errors.New("missing id")
 	}
 
 	now := time.Now().Unix()

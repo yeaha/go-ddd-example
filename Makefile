@@ -11,8 +11,11 @@ DIST_DIR := ${MKFILE_DIR}build/dist
 # Rules
 .PHONY: test
 test:
-	cd ${MKFILE_DIR}
-	go tool ginkgo -r -p --randomize-all --randomize-suites --keep-going --no-color ./internal/
+	cd ${MKFILE_DIR} && go tool ginkgo -r -p --randomize-all --randomize-suites --keep-going --no-color ./internal/
+
+.PHONY: test-e2e
+test-e2e:
+	cd ${MKFILE_DIR} && go tool ginkgo -r -p --randomize-all --randomize-suites --keep-going --timeout=2m --succinct --no-color ./test/e2e/
 
 # go install github.com/mitranim/gow@latest
 .PHONY: serve

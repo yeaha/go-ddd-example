@@ -13,6 +13,7 @@
 - `make serve` 启动本地测试服务
 - `make clean` 清除docker容器
 - `make test` 执行测试
+- `make test-e2e` 执行 http api e2e 测试
 
 ## 接口测试
 

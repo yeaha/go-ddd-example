@@ -25,7 +25,7 @@ var _ = Describe("accountDBRepository", func() {
 	newAccount := func() *domain.Account {
 		GinkgoHelper()
 
-		account := &domain.Account{}
+		account := &domain.Account{ID: uuid.New()}
 		Expect(account.SetEmail(email)).To(Succeed())
 		Expect(account.SetPassword("abcdef")).To(Succeed())
 		return account

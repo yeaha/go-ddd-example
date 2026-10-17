@@ -43,6 +43,14 @@ func ServerProvider(injector do.Injector) (*Server, error) {
 	return s, nil
 }
 
+// NewHandler 创建http handler
+func NewHandler(injector do.Injector) http.Handler {
+	s := &Server{
+		auth: do.MustInvoke[*authController](injector),
+	}
+	return s.newRouter()
+}
+
 // Close 关闭服务
 func (s *Server) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
