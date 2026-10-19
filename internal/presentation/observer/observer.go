@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"ddd-example/internal/app/event"
-	"ddd-example/internal/option"
 )
 
 // Start 启动领域事件观察者
-func Start(ctx context.Context, opt *option.Options) {
+func Start(ctx context.Context) {
 	(&emailNotifier{}).Subscribe(ctx, event.Stream)
 }
 

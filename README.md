@@ -25,9 +25,13 @@ VSCode可以使用[test/api.http](./test/api.http)测试脚本对本地启动好
 
 服务器二进制命令行启动代码
 
+### [/internal/bootstrap](./internal/bootstrap/)
+
+启动组装，负责数据库、迁移、OAuth客户端、依赖注入和http服务生命周期
+
 ### [/internal/option](./internal/option/)
 
-系统配置，外部服务资源初始化
+系统配置
 
 ### [/internal/presentaion](./internal/presentation/)
 

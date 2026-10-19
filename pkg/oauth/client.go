@@ -23,6 +23,9 @@ type Client interface {
 	Vendor() string
 }
 
+// Clients 三方登录客户端集合
+type Clients map[string]Client
+
 // Options 配置
 type Options struct {
 	ClientID     string `toml:"client_id"`

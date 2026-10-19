@@ -35,7 +35,7 @@ func TestInfra(t *testing.T) {
 
 // testDSN 基于数据库文件路径构造 DSN
 //
-// 参数与生产 DSN 保持一致（internal/option/options.go 的 getDBDSN）：
+// 参数与生产 DSN 保持一致（internal/bootstrap/bootstrap.go 的 getDBDSN）：
 // WAL、_sync=NORMAL、_fk=1、busy timeout 等，保证测试与生产行为一致。
 // _timeout 与驱动默认的 busy_timeout 相同（5s），显式写出以对齐生产配置。
 //

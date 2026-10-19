@@ -10,8 +10,8 @@ import (
 
 	"ddd-example/internal/app/handler"
 	"ddd-example/internal/domain"
-	"ddd-example/internal/option"
 	"ddd-example/pkg/logger"
+	"ddd-example/pkg/oauth"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -24,7 +24,7 @@ type contextKey any
 type authController struct {
 	// revive:disable:struct-tag
 
-	opt *option.Options `do:""`
+	clients oauth.Clients `do:""`
 
 	authorize         *handler.AuthorizeHandler         `do:""`
 	changePassword    *handler.ChangePasswordHandler    `do:""`
@@ -171,7 +171,7 @@ func (c *authController) MyIdentity() http.HandlerFunc {
 // LoginWithOauth oauth三方登录，下发重定向地址
 func (c *authController) LoginWithOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		client, ok := c.opt.GetOauthClient(chi.URLParam(r, "site"))
+		client, ok := c.clients[chi.URLParam(r, "site")]
 		if !ok {
 			panic(errOauthNotSupport)
 		}
@@ -192,7 +192,7 @@ func (c *authController) LoginWithOauth() http.HandlerFunc {
 // 前端在三方站点验证完毕重定向回来之后，把三方站点回传的query string提交给服务器端做验证
 func (c *authController) VerifyOauth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		client, ok := c.opt.GetOauthClient(chi.URLParam(r, "site"))
+		client, ok := c.clients[chi.URLParam(r, "site")]
 		if !ok {
 			panic(errOauthNotSupport)
 		}

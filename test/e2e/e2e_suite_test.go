@@ -1,26 +1,23 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
-	"ddd-example/internal/app"
-	"ddd-example/internal/infra"
+	"ddd-example/internal/bootstrap"
 	"ddd-example/internal/option"
-	"ddd-example/internal/presentation/httpapi"
 	"ddd-example/pkg/oauth"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/samber/do/v2"
 )
 
 // baseURL 进程内启动的http服务地址
@@ -31,7 +28,7 @@ func TestE2E(t *testing.T) {
 	RunSpecs(t, "E2E Suite")
 }
 
-// 所有ginkgo进程共享同一个http服务：由进程1启动进程内httptest服务，服务地址通过
+// 所有ginkgo进程共享同一个http服务：由进程1启动进程内http服务，服务地址通过
 // SynchronizedBeforeSuite广播给其余进程。进程1注册的cleanup会等所有进程
 // 结束后才执行，因此临时目录与服务生命周期覆盖整个测试运行。
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -45,21 +42,21 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	})
 
 	opt := &option.Options{DBDir: tmpDir}
+	opt.HTTP.Addr = "127.0.0.1:0"
 	opt.Oauth = map[string]oauth.Options{
 		"facebook": {ClientID: "test-client-id", ClientSecret: "test-client-secret"},
 	}
-	Expect(opt.Prepare()).To(Succeed())
-	// DeferCleanup是LIFO，服务先于数据库、临时目录被清理
+
+	app, err := bootstrap.New(opt)
+	Expect(err).NotTo(HaveOccurred())
+
+	addr, err := app.Start(context.Background())
+	Expect(err).NotTo(HaveOccurred())
 	DeferCleanup(func() {
-		Expect(opt.GetDB().Close()).To(Succeed())
+		Expect(app.Shutdown()).To(Succeed())
 	})
 
-	// 使用生产环境的依赖注入组装服务
-	injector := do.New(opt.Providers(), infra.Providers, app.Providers, httpapi.Providers)
-	server := httptest.NewServer(httpapi.NewHandler(injector))
-	DeferCleanup(server.Close)
-
-	return []byte(server.URL)
+	return []byte("http://" + addr)
 }, func(data []byte) {
 	baseURL = string(data)
 })
