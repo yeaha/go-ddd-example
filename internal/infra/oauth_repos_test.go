@@ -1,66 +1,54 @@
-//go:build dbtest
-// +build dbtest
-
 package infra
 
 import (
-	"cmp"
-	"context"
-	"errors"
-	"fmt"
-	"testing"
-	"time"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
+	"ddd-example/internal/app/adapter"
 	"ddd-example/internal/domain"
 
 	"github.com/google/uuid"
-	"github.com/joyparty/entity"
 )
 
-func TestOauthDBRepository(t *testing.T) {
-	if err := entity.Transaction(testDB, func(db entity.DB) (err error) {
-		defer func() {
-			err = cmp.Or(err, errRollbackTest)
-		}()
+var _ = Describe("oauthDBRepository", func() {
+	var (
+		repos     adapter.OauthRepository
+		accountID uuid.UUID
+		vendor    string
+		vendorUID string
+	)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+	BeforeEach(func() {
+		repos = NewOauthRepository(beginTestTx())
+		accountID = uuid.New()
+		vendor = "joyparty"
+		vendorUID = uuid.New().String()
+	})
 
-		var (
-			accountID = uuid.New()
-			vendor    = "joyparty"
-			vendorUID = uuid.New().String()
-		)
+	Describe("Bind", func() {
+		It("binds the vendor account to the account id", func(ctx SpecContext) {
+			Expect(repos.Bind(ctx, accountID, vendor, vendorUID)).To(Succeed())
+		}, specTimeout)
+	})
 
-		repos := NewOauthRepository(db)
+	Describe("Find", func() {
+		When("the binding exists", func() {
+			BeforeEach(func(ctx SpecContext) {
+				Expect(repos.Bind(ctx, accountID, vendor, vendorUID)).To(Succeed())
+			})
 
-		return testTable{
-			{
-				Name: "Bind",
-				Func: func() error {
-					return repos.Bind(ctx, accountID, vendor, vendorUID)
-				},
-			},
-			{
-				Name: "Find",
-				Func: func() error {
-					if _, err := repos.Find(ctx, "foobar", uuid.New().String()); err == nil {
-						return errors.New("expected error for non-existent binding")
-					} else if !errors.Is(err, domain.ErrAccountNotFound) {
-						return fmt.Errorf("expected domain.ErrAccountNotFound, got %v", err)
-					}
+			It("returns the bound account id", func(ctx SpecContext) {
+				got, err := repos.Find(ctx, vendor, vendorUID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(got).To(Equal(accountID))
+			}, specTimeout)
+		})
 
-					if uid, err := repos.Find(ctx, vendor, vendorUID); err != nil {
-						return err
-					} else if uid != accountID {
-						return fmt.Errorf("expected %s, got %s", accountID, uid)
-					}
-
-					return nil
-				},
-			},
-		}.Execute()
-	}); !errors.Is(err, errRollbackTest) {
-		t.Fatalf("oauth repository, %v", err)
-	}
-}
+		When("no binding matches", func() {
+			It("returns domain.ErrAccountNotFound", func(ctx SpecContext) {
+				_, err := repos.Find(ctx, "foobar", uuid.New().String())
+				Expect(err).To(MatchError(domain.ErrAccountNotFound))
+			}, specTimeout)
+		})
+	})
+})

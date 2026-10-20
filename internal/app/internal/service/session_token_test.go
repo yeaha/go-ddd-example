@@ -1,34 +1,56 @@
 package service
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"ddd-example/internal/domain"
 
 	"github.com/google/uuid"
 )
 
-func TestSessionTokenService(t *testing.T) {
-	account := &domain.Account{
-		ID:          uuid.New(),
-		SessionSalt: "54381095jfepwoqrp2",
-	}
-	token := newSessionToken(account)
+var _ = Describe("SessionTokenService", func() {
+	const salt = "54381095jfepwoqrp2"
 
-	service := SessionTokenService{}
-	payload := service.encode(token, account.SessionSalt)
-	if payload == "" {
-		t.Fatal("payload should not be empty")
-	}
+	var (
+		service SessionTokenService
+		account *domain.Account
+		token   SessionToken
+	)
 
-	decoded, err := service.decode(payload)
-	if err != nil {
-		t.Fatal(err)
-	} else if decoded != token {
-		t.Fatalf("decoded token should be equal to token")
-	} else if v := service.encode(decoded, account.SessionSalt); v != payload {
-		t.Fatalf("encoded token should be equal to payload")
-	} else if v := service.encode(decoded, "abcfaof"); v == payload {
-		t.Fatalf("encoded token should not be equal to payload")
-	}
-}
+	BeforeEach(func() {
+		account = &domain.Account{
+			ID:          uuid.New(),
+			SessionSalt: salt,
+		}
+		token = newSessionToken(account)
+	})
+
+	It("encodes a non-empty payload", func() {
+		Expect(service.encode(token, salt)).NotTo(BeEmpty())
+	})
+
+	Describe("round-tripping a token", func() {
+		var (
+			payload string
+			decoded SessionToken
+			err     error
+		)
+
+		JustBeforeEach(func() {
+			payload = service.encode(token, salt)
+			decoded, err = service.decode(payload)
+		})
+
+		It("decodes back to the original token and re-encodes to the same payload", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(decoded).To(Equal(token))
+			Expect(service.encode(decoded, salt)).To(Equal(payload))
+		})
+
+		It("produces a different payload with a different salt", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(service.encode(decoded, "abcfaof")).NotTo(Equal(payload))
+		})
+	})
+})

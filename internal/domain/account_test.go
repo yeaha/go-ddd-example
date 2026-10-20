@@ -1,17 +1,25 @@
 package domain
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestAccount(t *testing.T) {
-	a := &Account{}
+var _ = Describe("Account", func() {
+	var account *Account
 
-	if err := a.SetPassword("abcdefg"); err != nil {
-		t.Fatal(err)
-	} else if !a.ComparePassword("abcdefg") {
-		t.Fatal("compare password should be true")
-	} else if a.ComparePassword("abcdef") {
-		t.Fatal("compare password should be false")
-	}
-}
+	BeforeEach(func() {
+		account = &Account{}
+	})
+
+	Describe("password", func() {
+		BeforeEach(func() {
+			Expect(account.SetPassword("abcdefg")).To(Succeed())
+		})
+
+		It("only matches the password it was set with", func() {
+			Expect(account.ComparePassword("abcdefg")).To(BeTrue())
+			Expect(account.ComparePassword("abcdef")).To(BeFalse())
+		})
+	})
+})

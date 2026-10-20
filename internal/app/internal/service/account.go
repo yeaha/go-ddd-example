@@ -9,6 +9,7 @@ import (
 	"ddd-example/internal/domain"
 	"ddd-example/internal/infra"
 
+	"github.com/google/uuid"
 	"github.com/joyparty/entity"
 )
 
@@ -39,7 +40,12 @@ func (s *AccountService) Authorize(ctx context.Context, email, password string) 
 func (s *AccountService) Create(ctx context.Context, email, password string) (*domain.Account, error) {
 	_, err := s.Accounts.FindByEmail(ctx, domain.NormalizeEmail(email))
 	if errors.Is(err, domain.ErrAccountNotFound) {
-		account := &domain.Account{}
+		id, err := uuid.NewV7()
+		if err != nil {
+			return nil, fmt.Errorf("create account id, %w", err)
+		}
+
+		account := &domain.Account{ID: id}
 		if err := account.SetEmail(email); err != nil {
 			return nil, fmt.Errorf("set email, %w", err)
 		} else if err := account.SetPassword(password); err != nil {

@@ -1,5 +1,5 @@
 [http]
-port = 8765
+addr = ":8765"
 
 [oauth.facebook]
 client_id = "1234324"
